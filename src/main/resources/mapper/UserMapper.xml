@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.oasystem.system.mapper.UserMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="UserResultMap" type="com.oasystem.system.entity.User">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <result property="realName" column="real_name"/>
+        <result property="employeeNo" column="employee_no"/>
+        <result property="gender" column="gender"/>
+        <result property="phone" column="phone"/>
+        <result property="email" column="email"/>
+        <result property="avatar" column="avatar"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="entryDate" column="entry_date"/>
+        <result property="status" column="status"/>
+        <result property="lastLoginTime" column="last_login_time"/>
+        <result property="lastLoginIp" column="last_login_ip"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="createBy" column="create_by"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="deleted" column="deleted"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <!-- 分页查询用户（联表查部门名） -->
+    <select id="selectUserPage" resultMap="UserResultMap">
+        SELECT u.*
+        FROM sys_user u
+        <where>
+            u.deleted = 0
+            <if test="query.username != null and query.username != ''">
+                AND u.username LIKE CONCAT('%', #{query.username}, '%')
+            </if>
+            <if test="query.realName != null and query.realName != ''">
+                AND u.real_name LIKE CONCAT('%', #{query.realName}, '%')
+            </if>
+            <if test="query.phone != null and query.phone != ''">
+                AND u.phone = #{query.phone}
+            </if>
+            <if test="query.deptId != null">
+                AND u.dept_id = #{query.deptId}
+            </if>
+            <if test="query.status != null">
+                AND u.status = #{query.status}
+            </if>
+        </where>
+        ORDER BY u.create_time DESC
+    </select>
+
+    <!-- 根据用户名查询 -->
+    <select id="selectByUsername" resultMap="UserResultMap">
+        SELECT u.*
+        FROM sys_user u
+        WHERE u.username = #{username}
+          AND u.deleted = 0
+    </select>
+
+</mapper>

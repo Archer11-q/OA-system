@@ -1,0 +1,41 @@
+# ==============================================
+# OA System - 开发环境配置
+# ==============================================
+spring:
+  # ========== 数据源（默认使用H2内存数据库，开箱即用） ==========
+  datasource:
+    # 方案A：H2 内嵌数据库（无需安装MySQL即可运行）
+    url: jdbc:h2:file:./data/oa-system;MODE=MySQL;DB_CLOSE_DELAY=-1;AUTO_RECONNECT=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+    # 方案B：MySQL（生产环境切换到此配置）
+    # url: jdbc:mysql://localhost:3306/oa_system?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false
+    # driver-class-name: com.mysql.cj.jdbc.Driver
+    # username: root
+    # password: root
+  # H2 Web Console（开发时可通过浏览器查看数据库）
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: false
+        trace: false
+  # SQL 初始化（首次运行时自动建表）
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/schema-h2.sql
+      data-locations: classpath:db/data.sql
+      continue-on-error: true
+
+# ==============================================
+# 开发环境日志
+# ==============================================
+logging:
+  level:
+    root: INFO
+    com.oasystem: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: INFO
