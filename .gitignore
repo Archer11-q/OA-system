@@ -1,0 +1,83 @@
+# Maven
+/target/
+
+# Eclipse and IntelliJ
+/.idea/
+*.iml
+*.iws
+*.ipr
+/out/
+
+# VS Code
+.vscode/
+
+# Generated sources
+/generated-sources/
+/generated-test-sources/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+*~
+
+# Packages
+*.jar
+*.war
+*.ear
+
+# Spring Boot Devtools restart folder
+restart/
+
+# Maven build files created by shade/fat-jar
+dependency-reduced-pom.xml
+
+# H2 database files (开发时的本地数据库文件)
+/data/*.mv.db
+/data/*.trace.db
+
+# local environment files
+.env
+*.local
+secrets.properties
+
+# IDE misc
+.classpath
+.project
+.settings/
+
+# Test reports and surefire
+/surefire-reports/
+
+# OS-specific swap files
+*.swp
+
+# Ignore IntelliJ workspace-specific files (keep code, ignore personal settings)
+.idea/*
+!.idea/vcs.xml
+!.idea/inspectionProfiles
+
+# Ignore target-generated archives and classes
+/**/*.class
+
+# Node modules (in case frontend is in repo)
+/node_modules/
+
+# Docker
+docker-compose.override.yml
+
+# JetBrains native cache
+/.idea
+
+# Keep README, docs, SQL, source files tracked
+!doc/
+!sql/
+
+# End of file
+
