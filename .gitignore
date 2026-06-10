@@ -86,6 +86,7 @@ docker-compose.override.yml
 .idea/runConfigurations/
 /.idea/workspace.xml
 /logs/
+/uploads/
 /src/main/resources/application-local.yml
 *.keystore
 *.jks

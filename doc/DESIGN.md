@@ -29,6 +29,7 @@
 >- DEV-20 (2026-06-10)：实现文件上传功能：通用文件上传/头像上传接口（FileController），支持文件类型校验、按日期分目录存储、UUID 重命名防冲突，WebMvcConfig 配置静态资源映射使上传文件可通过 URL 直接访问。
 >- DEV-21 (2026-06-10)：实现数据看板后端 API（DashboardController）：系统概览（用户/部门/角色/公告数量）、今日考勤统计、本月审批汇总、本月报销汇总、近7天考勤趋势、审批状态分布、报销类型分布，为前端 ECharts 图表提供数据。
 >- DEV-22 (2026-06-10)：请假申请与审批中心集成：员工提交请假自动创建审批实例走多级审批流，审批完成后自动同步请假状态；appr_instance 表新增 business_type/business_id 通用业务关联字段；att_leave_request 表新增 approval_instance_id 关联审批实例；预设请假审批模板（部门负责人→管理员 2级审批）。
+>- DEV-23 (2026-06-10)：MySQL 生产环境配置：新增 application-prod.yml（MySQL + HikariCP 连接池 + 文件日志），application-dev.yml 保持 H2 开发环境；.gitignore 补充 /uploads/ 忽略规则；更新部署文档。
 
 
 ---
@@ -731,7 +732,7 @@ GET    /oa/dashboard/expense-distribution  ← 报销类型分布（饼图）
 
 ### Phase 5：上线准备
 
-- [ ] 切换到 MySQL
+- [x] 切换到 MySQL（DEV-23：application-prod.yml + HikariCP 连接池 + 日志）
 - [ ] 单元测试 + 集成测试
 - [ ] 性能优化（索引/缓存）
 - [ ] Docker 部署脚本
@@ -806,13 +807,23 @@ D:\CLion\tools\apache-maven-3.9.16\bin\mvn spring-boot:run
 #   - 用户名: sa，密码: 空
 ```
 
-### 10.2 切换到 MySQL
+### 10.2 切换到 MySQL（生产环境）
+
+**方式一：使用 prod profile（推荐）**
 
 1. 安装 MySQL 8.0
 2. 创建数据库：`CREATE DATABASE oa_system CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
 3. 导入建表脚本：`mysql -u root -p oa_system < sql/schema-mysql.sql`
-4. 修改 `application-dev.yml` 中的数据源配置
-5. 重启应用
+4. 修改 `application-prod.yml` 中的数据库连接信息（用户名/密码）
+5. 启动时指定 prod profile：
+   ```bash
+   java -jar target/oa-system.jar --spring.profiles.active=prod
+   ```
+   或在 `application.yml` 中修改 `spring.profiles.active` 为 `prod`
+
+**方式二：直接修改 dev profile**
+
+修改 `application-dev.yml` 中的数据源配置，注释 H2 部分，启用 MySQL 部分。
 
 ### 10.3 打包部署
 

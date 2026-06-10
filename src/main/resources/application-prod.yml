@@ -1,0 +1,43 @@
+# ==============================================
+# OA System - 生产环境配置（MySQL）
+# 使用方式：修改 application.yml 中 spring.profiles.active 为 prod
+# 或启动参数：--spring.profiles.active=prod
+# ==============================================
+spring:
+  # ========== MySQL 数据源 ==========
+  datasource:
+    url: jdbc:mysql://localhost:3306/oa_system?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: root
+    # HikariCP 连接池配置
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      connection-timeout: 20000
+      pool-name: OA-HikariPool
+  # 关闭 H2 控制台
+  h2:
+    console:
+      enabled: false
+  # 生产环境不自动执行 SQL 初始化（请手动导入 sql/schema-mysql.sql）
+  sql:
+    init:
+      mode: never
+
+# ==============================================
+# 生产环境日志
+# ==============================================
+logging:
+  level:
+    root: WARN
+    com.oasystem: INFO
+  file:
+    path: ./logs
+    name: ./logs/oa-system.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 30
