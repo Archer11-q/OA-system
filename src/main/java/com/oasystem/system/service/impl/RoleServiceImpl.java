@@ -21,6 +21,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
 
     private final RoleMapper roleMapper;
     private final RoleMenuMapper roleMenuMapper;
+    private final com.oasystem.system.mapper.UserRoleMapper userRoleMapper;
 
     @Override
     public List<Role> listAll() {
@@ -34,17 +35,36 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
 
     @Override
     public void createRole(Role role) {
+        // roleCode 唯一校验
+        if (role.getRoleCode() != null) {
+            Role exist = roleMapper.selectOne(new LambdaQueryWrapper<Role>().eq(Role::getRoleCode, role.getRoleCode()));
+            if (exist != null) {
+                throw new com.oasystem.common.exception.BusinessException("角色编码已存在");
+            }
+        }
         roleMapper.insert(role);
     }
 
     @Override
     public void updateRole(Role role) {
+        // 唯一校验 roleCode（排除自身）
+        if (role.getRoleCode() != null) {
+            Role exist = roleMapper.selectOne(new LambdaQueryWrapper<Role>().eq(Role::getRoleCode, role.getRoleCode()).ne(Role::getId, role.getId()));
+            if (exist != null) {
+                throw new com.oasystem.common.exception.BusinessException("角色编码已存在");
+            }
+        }
         roleMapper.updateById(role);
     }
 
     @Override
     @Transactional
     public void deleteRole(Long id) {
+        // 检查是否有用户关联该角色，若有则禁止删除
+        long count = userRoleMapper.selectCount(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.oasystem.system.entity.UserRole>().eq(com.oasystem.system.entity.UserRole::getRoleId, id));
+        if (count > 0) {
+            throw new com.oasystem.common.exception.BusinessException("角色已被分配给用户，无法删除");
+        }
         // 删除角色
         roleMapper.deleteById(id);
         // 删除关联的角色-菜单
