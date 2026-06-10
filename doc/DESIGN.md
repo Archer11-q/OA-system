@@ -1,4 +1,4 @@
-# OA 办公自动化系统 — 项目设计文档
+﻿# OA 办公自动化系统 — 项目设计文档
 
 > **版本**: 1.0.0  
 > **日期**: 2026-06-10  
@@ -21,6 +21,7 @@
 >- DEV-12 (2026-06-10)：实现数据权限（dataScope）基础支持：在用户分页查询中根据当前用户角色的 dataScope 自动注入过滤条件（全部/本部门/仅本人，简化处理子部门）。
 >- DEV-13 (2026-06-10)：完善菜单管理：新增菜单与更新接口加入 perms 唯一性校验，新增菜单更新接口，删除时清理角色-菜单关联。
 >- DEV-14 (2026-06-10)：菜单删除安全性增强：禁止删除已被角色引用的菜单，要求先从角色中移除引用后再删除。
+>- DEV-15 (2026-06-10)：实现日程管理模块 CRUD（ScheduleMapper/Service/Controller），支持按日期范围查询、新增/更新/删除日程，个人日程权限控制（仅创建人可修改/删除）。
 
 
 ---
@@ -211,10 +212,14 @@ oa-system/
     │   │   │   └── dto/
     │   │   │
     │   │   ├── schedule/                     # ═══ 模块5: 日程管理 ═══
-    │   │   │   ├── controller/               # 日程 CRUD（待实现）
+    │   │   │   ├── controller/
+    │   │   │   │   └── ScheduleController.java  # 日程 CRUD + 日期范围查询
     │   │   │   ├── service/
+    │   │   │   │   └── ScheduleService.java
     │   │   │   ├── service/impl/
+    │   │   │   │   └── ScheduleServiceImpl.java
     │   │   │   ├── mapper/
+    │   │   │   │   └── ScheduleMapper.java
     │   │   │   ├── entity/
     │   │   │   │   └── Schedule.java
     │   │   │   └── dto/
@@ -313,9 +318,18 @@ oa-system/
 
 ---
 
-### 4.5 模块5：日程管理（待实现 / 规划中）
+### 4.5 模块5：日程管理（✅ 基础已实现）
 
-- 日程 CRUD、日/周/月视图及提醒功能为规划项，尚未在后端完成
+当前实现（DEV-15）：
+- 日程 CRUD：✅ 新增/更新/删除/详情接口已实现（`ScheduleController`）
+- 按日期范围查询：✅ 支持按开始日期、结束日期过滤日程列表
+- 个人权限控制：✅ 仅创建人可修改/删除自己的日程
+- 参与人支持：✅ 日程可指定参与人列表（JSON 数组存储）
+
+待完善：
+- 日/周/月视图接口（前端日历组件对接）
+- 日程提醒通知功能
+- 部门日程/会议日程的可见性规则细化
 
 ---
 
@@ -487,10 +501,11 @@ PUT    /oa/notice               ← 编辑公告
 DELETE /oa/notice/{id}          ← 删除公告
 ```
 
-#### 日程管理 `/oa/schedule`
+#### 日程管理 `/oa/schedule`（✅ 已实现）
 
 ```
-GET    /oa/schedule/list        ← 日程列表（按日期范围）
+GET    /oa/schedule/list?startDate=&endDate=  ← 日程列表（按日期范围）
+GET    /oa/schedule/{id}        ← 日程详情
 POST   /oa/schedule             ← 新增日程
 PUT    /oa/schedule             ← 更新日程
 DELETE /oa/schedule/{id}        ← 删除日程
@@ -594,7 +609,7 @@ PUT    /oa/expense/{id}/approve ← 审批报销
 
 ### Phase 4：扩展模块（优先级：低 🟢）
 
-- [ ] 日程管理
+- [x] 日程管理（DEV-15）
 - [ ] 费用报销
 - [ ] 数据看板（ECharts 统计图表）
 - [ ] 文件上传（头像/附件）
