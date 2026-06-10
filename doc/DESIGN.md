@@ -30,6 +30,7 @@
 >- DEV-21 (2026-06-10)：实现数据看板后端 API（DashboardController）：系统概览（用户/部门/角色/公告数量）、今日考勤统计、本月审批汇总、本月报销汇总、近7天考勤趋势、审批状态分布、报销类型分布，为前端 ECharts 图表提供数据。
 >- DEV-22 (2026-06-10)：请假申请与审批中心集成：员工提交请假自动创建审批实例走多级审批流，审批完成后自动同步请假状态；appr_instance 表新增 business_type/business_id 通用业务关联字段；att_leave_request 表新增 approval_instance_id 关联审批实例；预设请假审批模板（部门负责人→管理员 2级审批）。
 >- DEV-23 (2026-06-10)：MySQL 生产环境配置：新增 application-prod.yml（MySQL + HikariCP 连接池 + 文件日志），application-dev.yml 保持 H2 开发环境；.gitignore 补充 /uploads/ 忽略规则；更新部署文档。
+>- DEV-24 (2026-06-10)：单元测试：JUnit 5 + Mockito 覆盖 ApprovalServiceImpl（多级审批引擎 12 用例）、AttendanceServiceImpl（请假审批集成 6 用例）、UserServiceImpl（登录/用户管理/密码重置 8 用例），全部 19 个测试通过。
 
 
 ---
@@ -733,7 +734,7 @@ GET    /oa/dashboard/expense-distribution  ← 报销类型分布（饼图）
 ### Phase 5：上线准备
 
 - [x] 切换到 MySQL（DEV-23：application-prod.yml + HikariCP 连接池 + 日志）
-- [ ] 单元测试 + 集成测试
+- [x] 单元测试（DEV-24：JUnit 5 + Mockito 覆盖 Approval/Attendance/User 三大核心 Service）
 - [ ] 性能优化（索引/缓存）
 - [ ] Docker 部署脚本
 - [ ] 接口文档完善
