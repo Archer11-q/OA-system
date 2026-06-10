@@ -20,6 +20,7 @@ D:\CLion\tools\apache-maven-3.9.16\bin\mvn spring-boot:run
  - DEV-03: 添加根路径健康接口（GET /），并调整 Security 配置允许根路径无鉴权，方便访问应用根地址。
 	 - DEV-04: 实现角色管理基础 CRUD、菜单树接口、用户-角色分配，并更新文档与 DB 脚本。
 	 - DEV-05: 实现权限注入（UserDetailsService），在 JWT 认证中加载用户权限并完善 `SecurityUtils`。
+					 - DEV-06: 实现菜单管理 CRUD 与敏感接口方法级权限注解，完善权限校验（含新增/删除菜单）。
 
 详细开发文档请见 `doc/` 目录。
 

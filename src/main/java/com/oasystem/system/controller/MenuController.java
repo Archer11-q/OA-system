@@ -9,6 +9,7 @@ import com.oasystem.system.mapper.MenuMapper;
 import com.oasystem.system.vo.MenuTreeVO;
 import com.oasystem.system.entity.Menu;
 import com.oasystem.security.SecurityUtils;
+import com.oasystem.system.mapper.RoleMenuMapper;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 public class MenuController {
     private final MenuMapper menuMapper;
     private final SecurityUtils securityUtils;
+    private final RoleMenuMapper roleMenuMapper;
 
     @Operation(summary = "查询菜单树")
     @GetMapping("/tree")
@@ -68,8 +70,22 @@ public class MenuController {
 
     @Operation(summary = "新增菜单")
     @PostMapping
-    public Result<String> add() {
-        // TODO: 实现新增菜单
-        return Result.ok("新增菜单 - 待实现");
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public Result<Void> add(@RequestBody Menu menu) {
+        if (menu == null) return Result.badRequest("参数为空");
+        menuMapper.insert(menu);
+        return Result.ok("新增成功", null);
+    }
+
+    @Operation(summary = "删除菜单")
+    @DeleteMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public Result<Void> delete(@PathVariable Long id) {
+        if (id == null) return Result.badRequest("参数为空");
+        // 删除菜单
+        menuMapper.deleteById(id);
+        // 清理 role-menu 关联
+        roleMenuMapper.delete(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.oasystem.system.entity.RoleMenu>().eq(com.oasystem.system.entity.RoleMenu::getMenuId, id));
+        return Result.ok("删除成功", null);
     }
 }

@@ -51,6 +51,7 @@ public class UserController {
 
     @Operation(summary = "为用户分配角色（覆盖）")
     @PutMapping("/{id}/roles")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Result<Void> assignRoles(@PathVariable("id") Long id, @Valid @RequestBody AssignRoleDTO dto) {
         userService.assignRolesToUser(id, dto.getRoleIds());
         return Result.ok("分配成功", null);
@@ -58,6 +59,7 @@ public class UserController {
 
     @Operation(summary = "移除用户的若干角色")
     @DeleteMapping("/{id}/roles")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Result<Void> removeRoles(@PathVariable("id") Long id, @RequestBody AssignRoleDTO dto) {
         // 移除指定角色（实现为在现有关联中删除传入的 roleIds）
         List<Role> current = userService.getUserRoles(id);

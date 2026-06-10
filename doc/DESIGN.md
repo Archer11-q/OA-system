@@ -13,6 +13,8 @@
 - DEV-04 (2026-06-10)：实现角色管理基础 CRUD、菜单树接口、用户-角色分配（Role/RoleMenu/UserRole），并更新文档与 DB 脚本。
 - DEV-04 (2026-06-10)：实现角色管理基础 CRUD、菜单树接口、用户-角色分配（Role/RoleMenu/UserRole），并更新文档与 DB 脚本。
 - DEV-05 (2026-06-10)：实现权限注入（UserDetailsService），在 JWT 认证中加载用户权限并填充 SecurityContext，完善 `SecurityUtils` 获取当前用户与权限。
+- DEV-05 (2026-06-10)：实现权限注入（UserDetailsService），在 JWT 认证中加载用户权限并填充 SecurityContext，完善 `SecurityUtils` 获取当前用户与权限。
+- DEV-06 (2026-06-10)：实现菜单管理 CRUD（新增/删除/查询树）并在敏感接口添加方法级权限注解（@PreAuthorize），完善角色/用户管理的权限校验。
 
 
 ---

@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import com.oasystem.system.dto.RoleDTO;
 import com.oasystem.system.entity.Role;
@@ -52,6 +53,7 @@ public class RoleController {
 
     @Operation(summary = "新增角色")
     @PostMapping
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Result<Void> add(@Valid @RequestBody RoleDTO dto) {
         Role role = new Role();
         BeanUtils.copyProperties(dto, role);
@@ -61,6 +63,7 @@ public class RoleController {
 
     @Operation(summary = "更新角色")
     @PutMapping
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Result<Void> update(@Valid @RequestBody RoleDTO dto) {
         Role role = new Role();
         BeanUtils.copyProperties(dto, role);
@@ -70,6 +73,7 @@ public class RoleController {
 
     @Operation(summary = "删除角色")
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Result<Void> delete(@PathVariable Long id) {
         roleService.deleteRole(id);
         return Result.ok("删除成功", null);
@@ -77,6 +81,7 @@ public class RoleController {
 
     @Operation(summary = "为角色分配菜单权限（覆盖）")
     @PutMapping("/{id}/menus")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Result<Void> assignMenus(@PathVariable("id") Long id, @RequestBody java.util.Map<String, java.util.List<Long>> body) {
         java.util.List<Long> menuIds = body.getOrDefault("menuIds", java.util.Collections.emptyList());
         roleService.assignMenus(id, menuIds);
