@@ -41,8 +41,9 @@ D:\CLion\tools\apache-maven-3.9.16\bin\mvn spring-boot:run
  - DEV-22：请假申请与审批中心集成（自动创建审批实例+审批完成回调同步状态）
  - DEV-23：MySQL 生产环境配置（application-prod.yml + HikariCP 连接池 + 文件日志）
  - DEV-24：单元测试（JUnit 5 + Mockito 覆盖三大核心 Service，19 测试用例全部通过）
+ - DEV-25：报销申请与审批中心集成（自动创建审批实例+审批完成回调同步状态）
 
-Phase 5（上线准备）：MySQL 配置 + 单元测试已完成，Docker 待开始。
+Phase 5（上线准备）：MySQL 配置 + 单元测试已完成，Docker 待开始。请假+报销审批流程闭环已实现。
 
 说明与注意：
 - `doc/DESIGN.md` 是主设计与迭代记录文档，后续请以该文件为权威进度记录。README 只保留高层摘要与启动说明。
@@ -56,7 +57,6 @@ Phase 5（上线准备）：MySQL 配置 + 单元测试已完成，Docker 待开
 
 | 优先级 | 方向 | 说明 |
 |--------|------|------|
-| 🟡 | 报销+审批集成 | 报销申请自动创建审批实例走多级审批流 |
 | 🟡 | 审批撤回功能 | 申请人撤回已提交的审批实例 |
 | 🟢 | Phase 5 - Docker 部署 | Dockerfile + docker-compose.yml |
 | 🟢 | 前端项目初始化 | Vue 3 + Element Plus，对接后端 API |

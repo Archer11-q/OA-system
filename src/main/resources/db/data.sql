@@ -60,3 +60,8 @@ SELECT 1, id FROM sys_menu;
 INSERT INTO appr_template (id, template_name, template_code, description, approval_levels, status, approvers_config) VALUES
 (1, '请假审批', 'LEAVE_APPROVAL', '员工请假审批流程：部门负责人审批 → 管理员终审', 2, 1,
  '[{"level":1,"type":"DEPT_LEADER"},{"level":2,"type":"ROLE","value":"ROLE_ADMIN"}]');
+
+-- 报销审批模板：2级审批 — 部门负责人 → 管理员
+INSERT INTO appr_template (id, template_name, template_code, description, approval_levels, status, approvers_config) VALUES
+(2, '报销审批', 'EXPENSE_APPROVAL', '员工报销审批流程：部门负责人审批 → 管理员终审', 2, 1,
+ '[{"level":1,"type":"DEPT_LEADER"},{"level":2,"type":"ROLE","value":"ROLE_ADMIN"}]');

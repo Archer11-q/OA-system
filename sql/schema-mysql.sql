@@ -278,23 +278,24 @@ CREATE TABLE sys_oper_log (
 
 -- ---------- 报销 ----------
 CREATE TABLE exp_request (
-    id               BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id          BIGINT         NOT NULL,
-    title            VARCHAR(128)   NOT NULL,
-    expense_type     TINYINT        NOT NULL,
-    amount           DECIMAL(12,2)  NOT NULL,
-    description      VARCHAR(512)   DEFAULT NULL,
-    attachments      TEXT           DEFAULT NULL,
-    status           TINYINT        DEFAULT 0,
-    approver_id      BIGINT         DEFAULT NULL,
-    approval_comment VARCHAR(256)   DEFAULT NULL,
-    approval_time    DATETIME       DEFAULT NULL,
-    create_time      DATETIME       DEFAULT CURRENT_TIMESTAMP,
-    update_time      DATETIME       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    create_by        BIGINT         DEFAULT NULL,
-    update_by        BIGINT         DEFAULT NULL,
-    deleted          TINYINT        DEFAULT 0,
-    remark           VARCHAR(500)   DEFAULT NULL
+    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id             BIGINT         NOT NULL,
+    title               VARCHAR(128)   NOT NULL,
+    expense_type        TINYINT        NOT NULL,
+    amount              DECIMAL(12,2)  NOT NULL,
+    description         VARCHAR(512)   DEFAULT NULL,
+    attachments         TEXT           DEFAULT NULL,
+    status              TINYINT        DEFAULT 0,
+    approver_id         BIGINT         DEFAULT NULL,
+    approval_comment    VARCHAR(256)   DEFAULT NULL,
+    approval_time       DATETIME       DEFAULT NULL,
+    approval_instance_id BIGINT        DEFAULT NULL,
+    create_time         DATETIME       DEFAULT CURRENT_TIMESTAMP,
+    update_time         DATETIME       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    create_by           BIGINT         DEFAULT NULL,
+    update_by           BIGINT         DEFAULT NULL,
+    deleted             TINYINT        DEFAULT 0,
+    remark              VARCHAR(500)   DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='报销申请';
 
 -- ========== 索引 ==========

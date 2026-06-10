@@ -45,4 +45,7 @@ public class ExpenseRequest extends BaseEntity {
 
     /** 审批时间 */
     private LocalDateTime approvalTime;
+
+    /** 关联审批实例ID */
+    private Long approvalInstanceId;
 }

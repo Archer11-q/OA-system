@@ -270,23 +270,24 @@ CREATE TABLE IF NOT EXISTS sys_oper_log (
 
 -- 报销申请表
 CREATE TABLE IF NOT EXISTS exp_request (
-    id               BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id          BIGINT         NOT NULL    COMMENT '申请人ID',
-    title            VARCHAR(128)   NOT NULL    COMMENT '报销标题',
-    expense_type     TINYINT        NOT NULL    COMMENT '报销类型(1差旅 2办公 3招待 4交通 5其他)',
-    amount           DECIMAL(12,2)  NOT NULL    COMMENT '报销金额',
-    description      VARCHAR(512)   DEFAULT NULL COMMENT '报销说明',
-    attachments      TEXT           DEFAULT NULL COMMENT '附件URL列表(JSON)',
-    status           TINYINT        DEFAULT 0   COMMENT '状态(0审批中 1已通过 2已驳回 3已撤回)',
-    approver_id      BIGINT         DEFAULT NULL COMMENT '审批人ID',
-    approval_comment VARCHAR(256)   DEFAULT NULL COMMENT '审批意见',
-    approval_time    DATETIME       DEFAULT NULL COMMENT '审批时间',
-    create_time      DATETIME       DEFAULT CURRENT_TIMESTAMP,
-    update_time      DATETIME       DEFAULT CURRENT_TIMESTAMP,
-    create_by        BIGINT         DEFAULT NULL,
-    update_by        BIGINT         DEFAULT NULL,
-    deleted          TINYINT        DEFAULT 0,
-    remark           VARCHAR(500)   DEFAULT NULL
+    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id             BIGINT         NOT NULL    COMMENT '申请人ID',
+    title               VARCHAR(128)   NOT NULL    COMMENT '报销标题',
+    expense_type        TINYINT        NOT NULL    COMMENT '报销类型(1差旅 2办公 3招待 4交通 5其他)',
+    amount              DECIMAL(12,2)  NOT NULL    COMMENT '报销金额',
+    description         VARCHAR(512)   DEFAULT NULL COMMENT '报销说明',
+    attachments         TEXT           DEFAULT NULL COMMENT '附件URL列表(JSON)',
+    status              TINYINT        DEFAULT 0   COMMENT '状态(0审批中 1已通过 2已驳回 3已撤回)',
+    approver_id         BIGINT         DEFAULT NULL COMMENT '审批人ID',
+    approval_comment    VARCHAR(256)   DEFAULT NULL COMMENT '审批意见',
+    approval_time       DATETIME       DEFAULT NULL COMMENT '审批时间',
+    approval_instance_id BIGINT        DEFAULT NULL COMMENT '关联审批实例ID',
+    create_time         DATETIME       DEFAULT CURRENT_TIMESTAMP,
+    update_time         DATETIME       DEFAULT CURRENT_TIMESTAMP,
+    create_by           BIGINT         DEFAULT NULL,
+    update_by           BIGINT         DEFAULT NULL,
+    deleted             TINYINT        DEFAULT 0,
+    remark              VARCHAR(500)   DEFAULT NULL
 );
 
 -- ========== 索引 ==========
