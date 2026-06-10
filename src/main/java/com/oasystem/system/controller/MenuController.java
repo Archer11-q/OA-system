@@ -73,6 +73,11 @@ public class MenuController {
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Result<Void> add(@RequestBody Menu menu) {
         if (menu == null) return Result.badRequest("参数为空");
+        // perms 唯一性校验（若填写）
+        if (menu.getPerms() != null && !menu.getPerms().isEmpty()) {
+            long cnt = menuMapper.selectCount(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<Menu>().eq(Menu::getPerms, menu.getPerms()));
+            if (cnt > 0) return Result.badRequest("权限标识已存在");
+        }
         menuMapper.insert(menu);
         return Result.ok("新增成功", null);
     }
@@ -87,5 +92,20 @@ public class MenuController {
         // 清理 role-menu 关联
         roleMenuMapper.delete(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.oasystem.system.entity.RoleMenu>().eq(com.oasystem.system.entity.RoleMenu::getMenuId, id));
         return Result.ok("删除成功", null);
+    }
+
+    @Operation(summary = "更新菜单")
+    @PutMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public Result<Void> update(@RequestBody Menu menu) {
+        if (menu == null || menu.getId() == null) return Result.badRequest("参数错误");
+        // perms 唯一性校验（排除自身）
+        if (menu.getPerms() != null && !menu.getPerms().isEmpty()) {
+            long cnt = menuMapper.selectCount(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<Menu>()
+                    .eq(Menu::getPerms, menu.getPerms()).ne(Menu::getId, menu.getId()));
+            if (cnt > 0) return Result.badRequest("权限标识已存在");
+        }
+        menuMapper.updateById(menu);
+        return Result.ok("更新成功", null);
     }
 }
