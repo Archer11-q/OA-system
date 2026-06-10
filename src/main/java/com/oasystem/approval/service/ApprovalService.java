@@ -49,4 +49,12 @@ public interface ApprovalService {
      * 查询审批记录
      */
     List<ApprovalRecord> getRecords(Long instanceId);
+
+    /**
+     * 撤回审批（仅申请人可撤回审批中的实例）
+     *
+     * @param instanceId  审批实例ID
+     * @param userId      当前用户ID
+     */
+    void cancel(Long instanceId, Long userId);
 }

@@ -324,6 +324,56 @@ class ApprovalServiceImplTest {
         assertTrue(todo.isEmpty());
     }
 
+    // ==================== 撤回审批测试 ====================
+
+    @Test
+    @DisplayName("撤回审批 — 申请人成功撤回审批中的实例")
+    void testCancel_Success() {
+        ApprovalInstance instance = createInstance(1L, 2, 1, Constants.APPROVAL_PENDING);
+        instance.setBusinessType(Constants.BUSINESS_TYPE_LEAVE);
+        instance.setBusinessId(100L);
+
+        when(instanceMapper.selectById(1L)).thenReturn(instance);
+        when(instanceMapper.updateById(any(ApprovalInstance.class))).thenReturn(1);
+
+        LeaveRequest leave = new LeaveRequest();
+        leave.setId(100L);
+        leave.setStatus(Constants.APPROVAL_PENDING);
+        when(leaveRequestMapper.selectById(100L)).thenReturn(leave);
+        when(leaveRequestMapper.updateById(any(LeaveRequest.class))).thenReturn(1);
+
+        // when: 申请人撤回
+        approvalService.cancel(1L, 10L); // applicantId=10L
+
+        // then
+        assertEquals(Constants.APPROVAL_CANCELLED, instance.getStatus());
+        assertEquals(Constants.APPROVAL_CANCELLED, leave.getStatus());
+        verify(leaveRequestMapper).updateById(leave);
+    }
+
+    @Test
+    @DisplayName("撤回审批 — 非申请人无法撤回")
+    void testCancel_NotApplicant() {
+        ApprovalInstance instance = createInstance(1L, 2, 1, Constants.APPROVAL_PENDING);
+
+        when(instanceMapper.selectById(1L)).thenReturn(instance);
+
+        // 用户 999L 不是申请人
+        assertThrows(BusinessException.class,
+                () -> approvalService.cancel(1L, 999L));
+    }
+
+    @Test
+    @DisplayName("撤回审批 — 已通过的审批无法撤回")
+    void testCancel_AlreadyApproved() {
+        ApprovalInstance instance = createInstance(1L, 2, 2, Constants.APPROVAL_APPROVED);
+
+        when(instanceMapper.selectById(1L)).thenReturn(instance);
+
+        assertThrows(BusinessException.class,
+                () -> approvalService.cancel(1L, 10L));
+    }
+
     // ==================== 业务回调测试 ====================
 
     @Test

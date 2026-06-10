@@ -277,6 +277,43 @@ public class ApprovalServiceImpl implements ApprovalService {
         }
     }
 
+    // ==================== 撤回审批 ====================
+
+    @Override
+    @Transactional
+    public void cancel(Long instanceId, Long userId) {
+        ApprovalInstance instance = instanceMapper.selectById(instanceId);
+        if (instance == null) {
+            throw new BusinessException("审批实例不存在");
+        }
+
+        // 校验：只有申请人本人可以撤回
+        if (!instance.getApplicantId().equals(userId)) {
+            throw new BusinessException("只能撤回自己的审批申请");
+        }
+
+        // 校验：只有审批中的实例可以撤回
+        if (!instance.getStatus().equals(Constants.APPROVAL_PENDING)) {
+            if (instance.getStatus().equals(Constants.APPROVAL_APPROVED)) {
+                throw new BusinessException("审批已通过，无法撤回");
+            } else if (instance.getStatus().equals(Constants.APPROVAL_REJECTED)) {
+                throw new BusinessException("审批已被驳回，无法撤回");
+            } else if (instance.getStatus().equals(Constants.APPROVAL_CANCELLED)) {
+                throw new BusinessException("审批已被撤回");
+            }
+        }
+
+        // 设置为已撤回
+        instance.setStatus(Constants.APPROVAL_CANCELLED);
+        instance.setFinishTime(LocalDateTime.now());
+        instanceMapper.updateById(instance);
+
+        // 同步业务记录状态
+        syncBusinessStatus(instance);
+
+        log.info("审批已撤回, instanceId={}, applicantId={}", instanceId, userId);
+    }
+
     // ==================== 审批记录查询 ====================
 
     @Override

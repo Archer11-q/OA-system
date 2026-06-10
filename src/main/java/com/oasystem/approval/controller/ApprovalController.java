@@ -72,6 +72,16 @@ public class ApprovalController {
         return Result.ok("审批完成", null);
     }
 
+    @Log(module = "审批中心", value = "撤回审批")
+    @Operation(summary = "撤回审批（仅申请人可撤回审批中的实例）")
+    @PostMapping("/{id}/cancel")
+    public Result<Void> cancel(@PathVariable("id") Long id) {
+        Long userId = securityUtils.getCurrentUserId();
+        if (userId == null) return Result.unauthorized("请先登录");
+        approvalService.cancel(id, userId);
+        return Result.ok("审批已撤回", null);
+    }
+
     @Operation(summary = "审批记录")
     @GetMapping("/{id}/records")
     public Result<List<ApprovalRecord>> records(@PathVariable("id") Long id) {
