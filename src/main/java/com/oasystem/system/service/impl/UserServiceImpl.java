@@ -38,7 +38,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final JwtTokenProvider jwtTokenProvider;
     private final com.oasystem.system.mapper.UserRoleMapper userRoleMapper;
     private final com.oasystem.system.mapper.RoleMapper roleMapper;
-    private final com.oasystem.system.mapper.MenuMapper menuMapper;
     private final com.oasystem.security.SecurityUtils securityUtils;
 
     @Override
@@ -165,7 +164,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         UserVO vo = toVO(user);
 
-        // 填充角色和权限信息（供前端 store 使用）
+        // 填充角色信息（供前端 store 使用）
         java.util.List<com.oasystem.system.entity.Role> roles = getUserRoles(userId);
         if (roles != null && !roles.isEmpty()) {
             java.util.List<String> roleCodes = roles.stream()
@@ -178,18 +177,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                     .collect(java.util.stream.Collectors.toList());
             vo.setRoleNames(roleNames);
             vo.setRoles(roleCodes);
-        }
-
-        // 填充菜单权限标识
-        java.util.List<com.oasystem.system.entity.Menu> menus =
-                menuMapper.selectMenusByUserId(userId);
-        if (menus != null && !menus.isEmpty()) {
-            java.util.List<String> perms = menus.stream()
-                    .map(com.oasystem.system.entity.Menu::getPerms)
-                    .filter(p -> p != null && !p.isEmpty())
-                    .distinct()
-                    .collect(java.util.stream.Collectors.toList());
-            vo.setPermissions(perms);
         }
 
         return vo;
