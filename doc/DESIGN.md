@@ -23,6 +23,7 @@
 >- DEV-14 (2026-06-10)：菜单删除安全性增强：禁止删除已被角色引用的菜单，要求先从角色中移除引用后再删除。
 >- DEV-15 (2026-06-10)：实现日程管理模块 CRUD（ScheduleMapper/Service/Controller），支持按日期范围查询、新增/更新/删除日程，个人日程权限控制（仅创建人可修改/删除）。
 >- DEV-16 (2026-06-10)：完善审批中心多级审批引擎：审批人配置（DEPT_LEADER/ROLE/USER三种类型）、审批人解析与快照、预创建审批记录、审批权限验证（用户只能审批自己负责的级别）、审批模板 CRUD（Admin权限管理）、统一使用 BusinessException 处理业务异常。
+>- DEV-17 (2026-06-10)：实现报销管理模块 CRUD（ExpenseMapper/Service/Controller），支持提交报销申请/列表查询（按状态过滤）/修改/删除，个人权限控制（只能操作自己的申请且仅待审批状态可修改/删除），报销统计接口（按状态汇总数量和金额）。
 
 
 ---
@@ -237,10 +238,14 @@ oa-system/
     │   │   │   └── dto/
     │   │   │
     │   │   └── expense/                      # ═══ 模块6: 报销管理 ═══
-    │   │       ├── controller/               # 报销申请/审批（待实现）
+    │   │       ├── controller/
+    │   │       │   └── ExpenseController.java   # 报销CRUD + 统计
     │   │       ├── service/
+    │   │       │   └── ExpenseService.java
     │   │       ├── service/impl/
+    │   │       │   └── ExpenseServiceImpl.java
     │   │       ├── mapper/
+    │   │       │   └── ExpenseMapper.java
     │   │       ├── entity/
     │   │       │   └── ExpenseRequest.java
     │   │       └── dto/
@@ -350,9 +355,18 @@ oa-system/
 
 ---
 
-### 4.6 模块6：报销管理（待实现 / 规划中）
+### 4.6 模块6：报销管理（✅ 基础已实现）
 
-- 报销申请、审批、附件管理与统计为规划项，尚未实现
+当前实现（DEV-17）：
+- 报销申请 CRUD：✅ 提交/列表查询/详情/修改/删除接口已实现（`ExpenseController`）
+- 个人权限控制：✅ 只能查看/修改/删除自己的报销申请，且仅待审批状态可修改/删除
+- 按状态过滤：✅ 列表支持按审批状态（审批中/已通过/已驳回）过滤
+- 报销统计：✅ 按状态汇总申请数量和金额（`/expense/stats`）
+- 金额校验：✅ 报销金额必须大于零
+
+待完善：
+- 附件上传功能（当前 attachments 为 JSON 字符串，需配合文件上传接口）
+- 与审批中心集成（报销申请自动创建审批实例走多级审批流）
 
 ---
 
@@ -535,12 +549,15 @@ PUT    /oa/schedule             ← 更新日程
 DELETE /oa/schedule/{id}        ← 删除日程
 ```
 
-#### 报销管理 `/oa/expense`
+#### 报销管理 `/oa/expense`（✅ 已实现）
 
 ```
-GET    /oa/expense/page         ← 报销列表
-POST   /oa/expense              ← 提交报销
-PUT    /oa/expense/{id}/approve ← 审批报销
+GET    /oa/expense/list?status= ← 我的报销列表（可选按状态过滤）
+GET    /oa/expense/{id}         ← 报销详情
+POST   /oa/expense              ← 提交报销申请
+PUT    /oa/expense              ← 修改报销申请（仅待审批状态）
+DELETE /oa/expense/{id}         ← 删除报销申请（仅待审批状态）
+GET    /oa/expense/stats        ← 报销统计（按状态汇总数量和金额）
 ```
 
 ### 6.5 Knife4j 文档
@@ -634,7 +651,7 @@ PUT    /oa/expense/{id}/approve ← 审批报销
 ### Phase 4：扩展模块（优先级：低 🟢）
 
 - [x] 日程管理（DEV-15）
-- [ ] 费用报销
+- [x] 费用报销（DEV-17）
 - [ ] 数据看板（ECharts 统计图表）
 - [ ] 文件上传（头像/附件）
 - [ ] 操作日志记录
