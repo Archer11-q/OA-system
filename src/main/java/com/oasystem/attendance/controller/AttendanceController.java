@@ -14,8 +14,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
-@Tag(name = "考勤管理", description = "签到/签退/请假")
+/**
+ * 考勤管理 Controller
+ */
+@Tag(name = "考勤管理", description = "签到/签退/请假/考勤统计")
 @RestController
 @RequestMapping("/attendance")
 @RequiredArgsConstructor
@@ -44,7 +48,8 @@ public class AttendanceController {
 
     @Operation(summary = "考勤记录（按月）")
     @GetMapping("/records")
-    public Result<List<Attendance>> records(@RequestParam(value = "month", required = false) String month) {
+    public Result<List<Attendance>> records(
+            @RequestParam(value = "month", required = false) String month) {
         Long userId = securityUtils.getCurrentUserId();
         if (userId == null) return Result.unauthorized("请先登录");
         if (month == null || month.isEmpty()) {
@@ -69,5 +74,30 @@ public class AttendanceController {
         Long id = attendanceService.applyLeave(req);
         return Result.ok(id);
     }
-}
 
+    @Operation(summary = "月度考勤汇总统计")
+    @GetMapping("/monthly-report")
+    public Result<Map<String, Object>> monthlyReport(
+            @RequestParam(value = "month", required = false) String month) {
+        Long userId = securityUtils.getCurrentUserId();
+        if (userId == null) return Result.unauthorized("请先登录");
+        if (month == null || month.isEmpty()) {
+            java.time.LocalDate now = java.time.LocalDate.now();
+            month = String.format("%04d-%02d", now.getYear(), now.getMonthValue());
+        }
+        return Result.ok(attendanceService.getMonthlyReport(userId, month));
+    }
+
+    @Operation(summary = "月度每日考勤状态明细")
+    @GetMapping("/daily-status")
+    public Result<List<Map<String, Object>>> dailyStatus(
+            @RequestParam(value = "month", required = false) String month) {
+        Long userId = securityUtils.getCurrentUserId();
+        if (userId == null) return Result.unauthorized("请先登录");
+        if (month == null || month.isEmpty()) {
+            java.time.LocalDate now = java.time.LocalDate.now();
+            month = String.format("%04d-%02d", now.getYear(), now.getMonthValue());
+        }
+        return Result.ok(attendanceService.getDailyStatus(userId, month));
+    }
+}

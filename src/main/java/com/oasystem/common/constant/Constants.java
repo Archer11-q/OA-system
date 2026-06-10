@@ -38,6 +38,12 @@ public final class Constants {
     /** 缺勤 */
     public static final String ATTENDANCE_ABSENT = "ABSENT";
 
+    // ========== 考勤时间配置 ==========
+    /** 上班时间（小时） */
+    public static final int WORK_START_HOUR = 9;
+    /** 下班时间（小时） */
+    public static final int WORK_END_HOUR = 18;
+
     // ========== 请假类型 ==========
     /** 年假 */
     public static final int LEAVE_ANNUAL = 1;
