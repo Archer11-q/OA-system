@@ -38,6 +38,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final JwtTokenProvider jwtTokenProvider;
     private final com.oasystem.system.mapper.UserRoleMapper userRoleMapper;
     private final com.oasystem.system.mapper.RoleMapper roleMapper;
+    private final com.oasystem.security.SecurityUtils securityUtils;
 
     @Override
     public Map<String, Object> login(LoginDTO loginDTO) {
@@ -72,6 +73,30 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public PageResult<UserVO> pageQuery(UserQueryDTO query) {
+        // 注入 dataScope 过滤
+        try {
+            Long currentUserId = securityUtils.getCurrentUserId();
+            if (currentUserId != null) {
+                java.util.List<com.oasystem.system.entity.Role> roles = this.getUserRoles(currentUserId);
+                // 找到最宽松的 dataScope（数值越小越宽松，1=全部）
+                int minScope = roles.stream().mapToInt(r -> r.getDataScope() == null ? 4 : r.getDataScope()).min().orElse(4);
+                if (minScope == 1) {
+                    // 全部数据，no-op
+                } else if (minScope == 4) {
+                    // 仅本人
+                    String username = securityUtils.getCurrentUsername();
+                    query.setOnlyUsername(username);
+                } else {
+                    // 本部门或本部门及子部门，简化实现：使用当前用户的 deptId
+                    User me = userMapper.selectById(currentUserId);
+                    if (me != null && me.getDeptId() != null) {
+                        query.setAllowedDeptIds(java.util.Collections.singletonList(me.getDeptId()));
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            // ignore
+        }
         Page<User> page = new Page<>(query.getPageNum(), query.getPageSize());
         IPage<User> result = userMapper.selectUserPage(page, query);
 

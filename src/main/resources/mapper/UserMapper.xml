@@ -45,6 +45,15 @@
             <if test="query.deptId != null">
                 AND u.dept_id = #{query.deptId}
             </if>
+            <if test="query.allowedDeptIds != null and query.allowedDeptIds.size() > 0">
+                AND u.dept_id IN
+                <foreach collection="query.allowedDeptIds" item="did" open="(" separator="," close=")">
+                    #{did}
+                </foreach>
+            </if>
+            <if test="query.onlyUsername != null and query.onlyUsername != ''">
+                AND u.username = #{query.onlyUsername}
+            </if>
             <if test="query.status != null">
                 AND u.status = #{query.status}
             </if>

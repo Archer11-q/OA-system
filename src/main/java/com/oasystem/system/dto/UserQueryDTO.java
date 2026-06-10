@@ -26,6 +26,12 @@ public class UserQueryDTO {
     /** 所属部门ID */
     private Long deptId;
 
+    /** 允许查询的部门ID集合（由 dataScope 决定） */
+    private java.util.List<Long> allowedDeptIds;
+
+    /** 仅按用户名精确过滤（用于 dataScope=4） */
+    private String onlyUsername;
+
     /** 状态 */
     private Integer status;
 }
