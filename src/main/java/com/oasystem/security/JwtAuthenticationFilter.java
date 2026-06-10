@@ -30,6 +30,7 @@ import java.util.Collections;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final org.springframework.security.core.userdetails.UserDetailsService userDetailsService;
 
     @Value("${jwt.header}")
     private String tokenHeader;
@@ -50,11 +51,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             log.debug("JWT认证成功: userId={}, username={}", userId, username);
 
-            // 临时实现：不查询数据库，直接将用户名设置为认证主体，权限列表为空。
-            // 后续可以替换为基于 UserDetailsService 的完整实现以加载权限。
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            try {
+                org.springframework.security.core.userdetails.UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            } catch (Exception ex) {
+                log.warn("加载用户详情失败，使用匿名认证: {}", ex.getMessage());
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
         }
 
         filterChain.doFilter(request, response);

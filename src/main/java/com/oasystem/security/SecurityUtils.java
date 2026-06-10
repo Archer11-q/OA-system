@@ -19,10 +19,19 @@ public class SecurityUtils {
      * TODO: 从 SecurityContextHolder 获取
      */
     public Long getCurrentUserId() {
-        // TODO: return ((UserDetails) SecurityContextHolder.getContext()
-        //         .getAuthentication().getPrincipal()).getUserId();
-        log.warn("SecurityUtils.getCurrentUserId() 尚未实现，返回默认值");
-        return 1L;
+        try {
+            Object principal = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if (principal instanceof JwtUserDetails) {
+                return ((JwtUserDetails) principal).getId();
+            }
+            if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+                // 无 id 信息时返回 null
+                return null;
+            }
+        } catch (Exception ex) {
+            log.debug("getCurrentUserId error", ex);
+        }
+        return null;
     }
 
     /**
@@ -30,9 +39,18 @@ public class SecurityUtils {
      * TODO: 从 SecurityContextHolder 获取
      */
     public String getCurrentUsername() {
-        // TODO: return SecurityContextHolder.getContext().getAuthentication().getName();
-        log.warn("SecurityUtils.getCurrentUsername() 尚未实现，返回默认值");
-        return "admin";
+        try {
+            Object principal = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if (principal instanceof JwtUserDetails) {
+                return ((JwtUserDetails) principal).getUsername();
+            }
+            if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+                return ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
+            }
+        } catch (Exception ex) {
+            log.debug("getCurrentUsername error", ex);
+        }
+        return null;
     }
 
     /**
@@ -40,7 +58,15 @@ public class SecurityUtils {
      * TODO: 从 SecurityContextHolder 获取权限列表并校验
      */
     public boolean hasPermission(String permission) {
-        log.warn("SecurityUtils.hasPermission() 尚未实现，默认返回 true");
-        return true;
+        try {
+            java.util.Collection<? extends org.springframework.security.core.GrantedAuthority> auths = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getAuthorities();
+            if (auths == null) return false;
+            for (org.springframework.security.core.GrantedAuthority a : auths) {
+                if (permission.equals(a.getAuthority())) return true;
+            }
+        } catch (Exception ex) {
+            log.debug("hasPermission error", ex);
+        }
+        return false;
     }
 }

@@ -11,6 +11,8 @@
 >- DEV-02 (2026-06-10)：添加 `.gitignore` 忽略本地构建与 IDE 文件，更新项目文档（README、DESIGN）
 - DEV-03 (2026-06-10)：添加根路径健康接口 `GET /`（HomeController），并在 `SecurityConfig` 中允许根路径无鉴权，方便访问应用根地址查看运行状态。
 - DEV-04 (2026-06-10)：实现角色管理基础 CRUD、菜单树接口、用户-角色分配（Role/RoleMenu/UserRole），并更新文档与 DB 脚本。
+- DEV-04 (2026-06-10)：实现角色管理基础 CRUD、菜单树接口、用户-角色分配（Role/RoleMenu/UserRole），并更新文档与 DB 脚本。
+- DEV-05 (2026-06-10)：实现权限注入（UserDetailsService），在 JWT 认证中加载用户权限并填充 SecurityContext，完善 `SecurityUtils` 获取当前用户与权限。
 
 
 ---
