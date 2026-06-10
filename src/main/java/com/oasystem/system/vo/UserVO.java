@@ -28,4 +28,6 @@ public class UserVO {
 
     // 角色信息
     private java.util.List<String> roleNames;
+    private java.util.List<String> roles;
+    private java.util.List<String> permissions;
 }

@@ -38,6 +38,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final JwtTokenProvider jwtTokenProvider;
     private final com.oasystem.system.mapper.UserRoleMapper userRoleMapper;
     private final com.oasystem.system.mapper.RoleMapper roleMapper;
+    private final com.oasystem.system.mapper.MenuMapper menuMapper;
     private final com.oasystem.security.SecurityUtils securityUtils;
 
     @Override
@@ -153,13 +154,45 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public UserVO getCurrentUserInfo() {
-        // TODO: 从 SecurityContext 获取当前登录用户ID
-        Long userId = 1L;
+        Long userId = securityUtils.getCurrentUserId();
+        if (userId == null) {
+            // 开发环境兜底：无认证上下文时默认返回admin
+            userId = 1L;
+        }
         User user = userMapper.selectById(userId);
         if (user == null) {
             throw new BusinessException("用户不存在");
         }
-        return toVO(user);
+        UserVO vo = toVO(user);
+
+        // 填充角色和权限信息（供前端 store 使用）
+        java.util.List<com.oasystem.system.entity.Role> roles = getUserRoles(userId);
+        if (roles != null && !roles.isEmpty()) {
+            java.util.List<String> roleCodes = roles.stream()
+                    .map(com.oasystem.system.entity.Role::getRoleCode)
+                    .filter(r -> r != null)
+                    .collect(java.util.stream.Collectors.toList());
+            java.util.List<String> roleNames = roles.stream()
+                    .map(com.oasystem.system.entity.Role::getRoleName)
+                    .filter(r -> r != null)
+                    .collect(java.util.stream.Collectors.toList());
+            vo.setRoleNames(roleNames);
+            vo.setRoles(roleCodes);
+        }
+
+        // 填充菜单权限标识
+        java.util.List<com.oasystem.system.entity.Menu> menus =
+                menuMapper.selectMenusByUserId(userId);
+        if (menus != null && !menus.isEmpty()) {
+            java.util.List<String> perms = menus.stream()
+                    .map(com.oasystem.system.entity.Menu::getPerms)
+                    .filter(p -> p != null && !p.isEmpty())
+                    .distinct()
+                    .collect(java.util.stream.Collectors.toList());
+            vo.setPermissions(perms);
+        }
+
+        return vo;
     }
 
     @Override

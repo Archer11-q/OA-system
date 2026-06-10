@@ -40,16 +40,21 @@ public class SecurityConfig {
                 // 无状态会话（不使用 HttpSession）
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // 放行所有请求（开发初期，后续收紧）
+                // 放行所有 API（认证由 JwtAuthenticationFilter 处理，鉴权由 @PreAuthorize 控制）
+                // 注意：server.servlet.context-path=/oa 会剥离前缀，Security 匹配的是剥离后的路径
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/",
-                                "/index",
-                                "/index.html",
-                                "/oa",
-                                "/oa/",
-                                "/oa/**",
                                 "/auth/**",
+                                "/dashboard/**",
+                                "/system/**",
+                                "/attendance/**",
+                                "/approval/**",
+                                "/notice/**",
+                                "/schedule/**",
+                                "/expense/**",
+                                "/file/**",
+                                "/log/**",
                                 "/swagger-ui/**",
                                 "/swagger-resources/**",
                                 "/v3/api-docs/**",
