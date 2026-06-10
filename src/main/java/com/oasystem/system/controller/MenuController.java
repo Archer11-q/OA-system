@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import com.oasystem.system.mapper.MenuMapper;
+import com.oasystem.system.service.MenuService;
 import com.oasystem.system.vo.MenuTreeVO;
 import com.oasystem.system.entity.Menu;
 import com.oasystem.security.SecurityUtils;
@@ -25,46 +25,14 @@ import java.util.stream.Collectors;
 @RequestMapping("/system/menu")
 @RequiredArgsConstructor
 public class MenuController {
-    private final MenuMapper menuMapper;
+    private final MenuService menuService;
     private final SecurityUtils securityUtils;
-    private final RoleMenuMapper roleMenuMapper;
 
     @Operation(summary = "查询菜单树")
     @GetMapping("/tree")
     public Result<List<MenuTreeVO>> tree(@RequestParam(value = "all", required = false, defaultValue = "false") boolean all) {
         Long userId = securityUtils.getCurrentUserId();
-        List<Menu> menus;
-        if (all) {
-            menus = menuMapper.selectList(null);
-        } else {
-            menus = menuMapper.selectMenusByUserId(userId);
-        }
-        // 转换为 VO 并组装树
-        List<MenuTreeVO> vos = menus.stream().map(m -> {
-            MenuTreeVO vo = new MenuTreeVO();
-            vo.setId(m.getId());
-            vo.setParentId(m.getParentId());
-            vo.setMenuName(m.getMenuName());
-            vo.setPath(m.getPath());
-            vo.setComponent(m.getComponent());
-            vo.setIcon(m.getIcon());
-            vo.setMenuType(m.getMenuType());
-            vo.setSort(m.getSort());
-            vo.setVisible(m.getVisible());
-            return vo;
-        }).collect(Collectors.toList());
-
-        Map<Long, MenuTreeVO> map = vos.stream().collect(Collectors.toMap(MenuTreeVO::getId, v -> v));
-        List<MenuTreeVO> roots = vos.stream().filter(v -> v.getParentId() == null || v.getParentId() == 0L).collect(Collectors.toList());
-        for (MenuTreeVO vo : vos) {
-            if (vo.getParentId() != null && vo.getParentId() != 0L) {
-                MenuTreeVO parent = map.get(vo.getParentId());
-                if (parent != null) {
-                    if (parent.getChildren() == null) parent.setChildren(new java.util.ArrayList<>());
-                    parent.getChildren().add(vo);
-                }
-            }
-        }
+        List<MenuTreeVO> roots = menuService.tree(all, userId);
         return Result.ok(roots);
     }
 
@@ -73,13 +41,14 @@ public class MenuController {
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('system:menu:add')")
     public Result<Void> add(@RequestBody Menu menu) {
         if (menu == null) return Result.badRequest("参数为空");
-        // perms 唯一性校验（若填写）
-        if (menu.getPerms() != null && !menu.getPerms().isEmpty()) {
-            long cnt = menuMapper.selectCount(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<Menu>().eq(Menu::getPerms, menu.getPerms()));
-            if (cnt > 0) return Result.badRequest("权限标识已存在");
+        try {
+            menuService.add(menu);
+            return Result.ok("新增成功", null);
+        } catch (IllegalArgumentException e) {
+            return Result.badRequest(e.getMessage());
+        } catch (IllegalStateException e) {
+            return Result.badRequest(e.getMessage());
         }
-        menuMapper.insert(menu);
-        return Result.ok("新增成功", null);
     }
 
     @Operation(summary = "删除菜单")
@@ -87,14 +56,14 @@ public class MenuController {
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('system:menu:delete')")
     public Result<Void> delete(@PathVariable Long id) {
         if (id == null) return Result.badRequest("参数为空");
-        // 若已有角色引用此菜单，禁止删除以避免权限丢失
-        long refCount = roleMenuMapper.selectCount(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.oasystem.system.entity.RoleMenu>().eq(com.oasystem.system.entity.RoleMenu::getMenuId, id));
-        if (refCount > 0) {
-            return Result.badRequest("该菜单已被角色引用，不能删除，请先从角色中移除引用");
+        try {
+            menuService.delete(id);
+            return Result.ok("删除成功", null);
+        } catch (IllegalArgumentException e) {
+            return Result.badRequest(e.getMessage());
+        } catch (IllegalStateException e) {
+            return Result.badRequest(e.getMessage());
         }
-        // 删除菜单
-        menuMapper.deleteById(id);
-        return Result.ok("删除成功", null);
     }
 
     @Operation(summary = "更新菜单")
@@ -102,13 +71,13 @@ public class MenuController {
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('system:menu:edit')")
     public Result<Void> update(@RequestBody Menu menu) {
         if (menu == null || menu.getId() == null) return Result.badRequest("参数错误");
-        // perms 唯一性校验（排除自身）
-        if (menu.getPerms() != null && !menu.getPerms().isEmpty()) {
-            long cnt = menuMapper.selectCount(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<Menu>()
-                    .eq(Menu::getPerms, menu.getPerms()).ne(Menu::getId, menu.getId()));
-            if (cnt > 0) return Result.badRequest("权限标识已存在");
+        try {
+            menuService.update(menu);
+            return Result.ok("更新成功", null);
+        } catch (IllegalArgumentException e) {
+            return Result.badRequest(e.getMessage());
+        } catch (IllegalStateException e) {
+            return Result.badRequest(e.getMessage());
         }
-        menuMapper.updateById(menu);
-        return Result.ok("更新成功", null);
     }
 }

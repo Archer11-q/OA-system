@@ -25,18 +25,13 @@ D:\CLion\tools\apache-maven-3.9.16\bin\mvn spring-boot:run
 
 主要开发/迭代记录简要（最新在 `doc/DESIGN.md` 中）：
 
-- DEV-01..DEV-03：项目骨架、JWT + Security、基础文档与健康检查
-- DEV-04..DEV-07：角色/菜单/部门 管理与权限初步实现
-- DEV-08：考勤模块基础实现（签到/签退/请假）
-- DEV-09：公告模块基础实现
-- DEV-10：审批中心骨架（模板/实例/记录）
- - DEV-05：权限注入与 JWT 权限加载（完成）
+ - DEV-01..DEV-03：项目骨架、JWT + Security、基础文档与健康检查
  - DEV-04..DEV-07：角色/菜单/部门 管理与权限初步实现
-	 - DEV-06：菜单管理 CRUD 开始（进行中）
+ - DEV-06：菜单管理 CRUD（已完成）
  - DEV-08：考勤模块基础实现（签到/签退/请假）
  - DEV-09：公告模块基础实现
  - DEV-10：审批中心骨架（模板/实例/记录）
-- DEV-11..DEV-14：RBAC 完善、dataScope 支持、菜单 perms 唯一性校验、菜单删除安全性
+ - DEV-11..DEV-14：RBAC 完善、dataScope 支持、菜单 perms 唯一性校验、菜单删除安全性
 
 说明与注意：
 - `doc/DESIGN.md` 是主设计与迭代记录文档，后续请以该文件为权威进度记录。README 只保留高层摘要与启动说明。

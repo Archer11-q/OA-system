@@ -81,3 +81,12 @@ docker-compose.override.yml
 
 # End of file
 
+
+# Additional local/IDE/runtime ignores added in DEV-06
+.idea/runConfigurations/
+/.idea/workspace.xml
+/logs/
+/src/main/resources/application-local.yml
+*.keystore
+*.jks
+
