@@ -1,8 +1,10 @@
-# OA System — 后端
+# OA System — 全栈（Vue 3 + Spring Boot）
 
-本仓库包含 OA 办公自动化系统后端（Spring Boot + MyBatis-Plus + JWT）的源码与文档。
+本仓库包含 OA 办公自动化系统的后端（Spring Boot + MyBatis-Plus + JWT）与前端（Vue 3 + Element Plus）源码及文档。
 
-快速运行（开发环境，内置 H2）：
+## 快速运行
+
+### 后端（开发环境，内置 H2）
 
 ```powershell
 cd D:\CLion\oa-system
@@ -14,15 +16,35 @@ D:\CLion\tools\apache-maven-3.9.16\bin\mvn spring-boot:run
 - API 文档（Knife4j/Swagger）： http://localhost:8080/oa/doc.html
 - H2 控制台： http://localhost:8080/oa/h2-console （JDBC URL: jdbc:h2:file:./data/oa-system，用户: sa，密码: 空）
 
-项目当前状态（与 `doc/DESIGN.md` 保持一致；若需要其它视图请告知）：
+### 前端（Vue 3 + Element Plus）
 
-- 模块1 - 系统管理：基础已实现（用户登录、用户 CRUD、菜单/部门/角色的核心接口已完成）；操作日志 AOP（DEV-19）+ 文件上传（DEV-20）已实现。
-- 模块2 - 考勤：已实现（DEV-08/18），签到/签退自动判定迟到早退+工时计算+月度汇总报表+每日状态明细。
-- 模块3 - 审批中心：多级审批引擎已实现（DEV-16），含审批人配置/权限验证/模板管理。
-- 模块4 - 公告通知：列表/详情/发布/编辑/删除（管理员权限）已实现。
-- 模块5 - 日程管理：基础 CRUD 已实现（DEV-15），日/周/月视图与提醒为后续迭代。
-- 模块6 - 报销管理：基础 CRUD 已实现（DEV-17），提交/列表/修改/删除 + 统计汇总。
-- 数据看板：聚合统计 API 已实现（DEV-21），系统概览/考勤趋势/审批分布/报销分布。
+```powershell
+cd D:\CLion\oa-system\frontend
+npm install
+npm run dev
+```
+
+访问：http://localhost:5173 （自动代理后端 localhost:8080，默认账号 admin/123456）
+
+### Docker 一键部署
+
+```powershell
+cd D:\CLion\oa-system
+docker-compose up -d
+```
+
+## 项目当前状态（与 `doc/DESIGN.md` 保持一致）
+
+- 模块1 - 系统管理：✅ 用户/角色/菜单/部门 CRUD + RBAC 权限 + 数据权限（dataScope）+ 文件上传 + 数据看板
+- 模块2 - 考勤：✅ 签到/签退（迟到早退判定）+ 月度汇总 + 每日明细 + 请假自动创建多级审批（DEV-22）
+- 模块3 - 审批中心：✅ 多级审批引擎（DEPT_LEADER/ROLE/USER 三种审批人）+ 模板管理 + 撤回功能（DEV-26）+ 请假/报销状态回调
+- 模块4 - 公告通知：✅ 列表/详情/发布/编辑/删除
+- 模块5 - 日程管理：✅ CRUD + 日期范围查询 + 个人权限控制
+- 模块6 - 报销管理：✅ CRUD + 统计 + 自动创建多级审批（DEV-25）
+- 操作日志：✅ AOP 自动记录（@Log 注解）
+- 前端：✅ Vue 3 + Element Plus + Router + Pinia（DEV-28）：登录/布局/看板/用户列表
+- 测试：✅ 22 单元测试（ApprovalServiceImpl / AttendanceServiceImpl / UserServiceImpl）
+- 部署：✅ Dockerfile 多阶段构建 + docker-compose.yml（MySQL + App）
 
 主要开发/迭代记录简要（最新在 `doc/DESIGN.md` 中）：
 
@@ -45,8 +67,9 @@ D:\CLion\tools\apache-maven-3.9.16\bin\mvn spring-boot:run
  - DEV-26：审批撤回功能（申请人撤回审批中实例+同步业务状态）
  - DEV-27：Docker 部署（Dockerfile 多阶段构建 + docker-compose.yml MySQL+App）
  - DEV-28：前端项目初始化（Vue 3 + Element Plus + Router + Pinia + Axios，登录+布局+看板+用户管理）
+ - HOTFIX：修复 DashboardController 第104行 int 基本类型 equals() 编译错误
 
-Phase 5（上线准备）：MySQL 配置 / 单元测试 / Docker 部署已完成。前端项目已初始化。
+Phase 1-5 全部完成。后端 6 大模块 + 审批流程闭环 + 前端框架就绪。
 
 说明与注意：
 - `doc/DESIGN.md` 是主设计与迭代记录文档，后续请以该文件为权威进度记录。README 只保留高层摘要与启动说明。

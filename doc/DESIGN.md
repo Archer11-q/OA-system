@@ -33,6 +33,7 @@
 >- DEV-24 (2026-06-10)：单元测试：JUnit 5 + Mockito 覆盖 ApprovalServiceImpl（多级审批引擎 12 用例）、AttendanceServiceImpl（请假审批集成 6 用例）、UserServiceImpl（登录/用户管理/密码重置 8 用例），全部 19 个测试通过。
 >- DEV-25 (2026-06-10)：报销申请与审批中心集成：员工提交报销自动创建审批实例走多级审批流，审批完成后自动同步报销状态（复用 DEV-22 business_type/business_id 回调机制）；exp_request 表新增 approval_instance_id；预设报销审批模板（部门负责人→管理员 2级审批）。
 >- DEV-26 (2026-06-10)：审批撤回功能：申请人可撤回自己审批中的实例（POST /approval/{id}/cancel），撤回后同步更新关联业务记录状态；新增 3 个撤回测试用例，累计 22 测试全部通过。
+>- HOTFIX (2026-06-10)：修复 DashboardController.java 第104行编译错误 — `Constants.APPROVAL_APPROVED`（int基本类型）无法作为 `.equals()` 的 receiver，改用 `e.getStatus() != null && e.getStatus() ==` 判空后比较。
 >- DEV-27 (2026-06-10)：Docker 部署：Dockerfile（多阶段构建：Maven 编译 + JRE 运行镜像）+ docker-compose.yml（MySQL 8.0 + OA 应用，健康检查+数据卷持久化），MySQL 初始化脚本自动导入。
 >- DEV-28 (2026-06-10)：前端项目初始化（Vue 3 + Vite + Element Plus + Vue Router + Pinia + Axios）：登录页（JWT 认证+路由守卫）、主布局（侧边栏菜单+折叠+头部导航+用户下拉）、数据看板（概览卡片+模块入口）、用户管理列表（分页查询+表格）；Axios 封装（Token 注入+401 拦截）；8 个业务模块路由/视图骨架已建立。
 
@@ -134,12 +135,36 @@ lombok                            ← 代码简化
 
 ```
 oa-system/
-├── pom.xml                          # Maven 配置（依赖、插件）
-├── README.md                        # 项目说明
+├── pom.xml                              # Maven 配置（依赖、插件）
+├── README.md                            # 项目说明
+├── .gitignore                           # Git 忽略规则
+├── Dockerfile                           # Docker 多阶段构建
+├── docker-compose.yml                   # Docker Compose（MySQL + OA应用）
 ├── doc/
-│   └── DESIGN.md                    # 本设计文档
+│   └── DESIGN.md                        # 本设计文档
 ├── sql/
-│   └── schema-mysql.sql             # MySQL 完整建表脚本
+│   └── schema-mysql.sql                 # MySQL 完整建表脚本
+├── frontend/                            # ═══ Vue 3 前端项目 ═══
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.js                   # Vite + 代理配置
+│   └── src/
+│       ├── main.js                      # 入口（Element Plus + Router + Pinia）
+│       ├── App.vue                      # 根组件
+│       ├── utils/request.js             # Axios 封装（JWT + 401拦截）
+│       ├── api/                         # API 模块（auth/user/dashboard）
+│       ├── stores/                      # Pinia 状态（user/app）
+│       ├── router/index.js              # 路由表 + 守卫
+│       ├── layout/index.vue             # 主布局（侧边栏 + Header）
+│       └── views/                       # 页面视图
+│           ├── login/                   # 登录页
+│           ├── dashboard/               # 数据看板
+│           ├── system/                  # 系统管理（用户/角色/菜单/部门）
+│           ├── attendance/              # 考勤管理
+│           ├── approval/                # 审批中心
+│           ├── notice/                  # 公告通知
+│           ├── schedule/                # 日程管理
+│           └── expense/                 # 报销管理
 └── src/
     ├── main/
     │   ├── java/com/oasystem/
@@ -150,7 +175,7 @@ oa-system/
     │   │   │   ├── BaseEntity.java           # 实体基类（id, createTime, updateTime, deleted...）
     │   │   │   ├── MyMetaObjectHandler.java  # 自动填充 createBy/updateBy
     │   │   │   ├── constant/
-    │   │   │   │   └── Constants.java        # 业务常量（审批状态、考勤状态等）
+    │   │   │   │   └── Constants.java        # 业务常量（审批状态/考勤状态/业务类型等）
     │   │   │   └── exception/
     │   │   │       ├── BusinessException.java     # 业务异常
     │   │   │       └── GlobalExceptionHandler.java # 全局异常处理
@@ -158,151 +183,112 @@ oa-system/
     │   │   │   ├── SecurityConfig.java       # Spring Security（JWT + RBAC）
     │   │   │   ├── CorsConfig.java           # 跨域 CORS
     │   │   │   ├── MyBatisPlusConfig.java    # MP 分页插件 + MapperScan
-    │   │   │   └── WebMvcConfig.java         # Web MVC（拦截器等）
+    │   │   │   └── WebMvcConfig.java         # Web MVC（拦截器 + 静态资源映射）
     │   │   ├── security/                     # 安全认证
     │   │   │   ├── JwtTokenProvider.java     # JWT 生成/解析/验证
     │   │   │   ├── JwtAuthenticationFilter.java # 请求过滤器
+    │   │   │   ├── JwtUserDetails.java       # 用户详情
+    │   │   │   ├── UserDetailsServiceImpl.java # UserDetailsService 实现
     │   │   │   └── SecurityUtils.java        # 获取当前用户工具类
     │   │   │
     │   │   ├── system/                       # ═══ 模块1: 系统管理 ═══
     │   │   │   ├── controller/
-    │   │   │   │   ├── AuthController.java   # 登录/登出/用户信息
-    │   │   │   │   ├── UserController.java   # 用户 CRUD + 重置密码
-    │   │   │   │   ├── RoleController.java   # 角色 CRUD + 菜单分配
-    │   │   │   │   ├── DeptController.java   # 部门 CRUD + 部门树
-    │   │   │   │   ├── MenuController.java   # 菜单/权限管理
-    │   │   │   │   ├── FileController.java    # 文件上传
-    │   │   │   │   └── DashboardController.java # 数据看板
-    │   │   │   │   ├── DashboardController.java # 数据看板
-    │   │   │   │   └── UserService.java
-    │   │   │   ├── service/impl/             # 业务实现
-    │   │   │   │   └── UserServiceImpl.java  # 登录认证 + 用户管理
-    │   │   │   ├── mapper/                   # 数据访问
-    │   │   │   │   ├── UserMapper.java
-    │   │   │   │   ├── RoleMapper.java
-    │   │   │   │   ├── DeptMapper.java
-    │   │   │   │   └── MenuMapper.java
+    │   │   │   │   ├── AuthController.java       # 登录/登出/用户信息
+    │   │   │   │   ├── UserController.java       # 用户 CRUD + 重置密码
+    │   │   │   │   ├── RoleController.java       # 角色 CRUD + 菜单分配
+    │   │   │   │   ├── DeptController.java       # 部门 CRUD + 部门树
+    │   │   │   │   ├── MenuController.java       # 菜单/权限管理
+    │   │   │   │   ├── FileController.java       # 文件上传
+    │   │   │   │   ├── DashboardController.java  # 数据看板
+    │   │   │   │   └── HomeController.java       # 根路径健康检查
     │   │   │   ├── service/
     │   │   │   │   ├── UserService.java
     │   │   │   │   ├── RoleService.java
     │   │   │   │   ├── DeptService.java
     │   │   │   │   └── MenuService.java
     │   │   │   ├── service/impl/
-    │   │   │   │   ├── UserServiceImpl.java
+    │   │   │   │   ├── UserServiceImpl.java      # 登录认证 + 用户管理
     │   │   │   │   ├── RoleServiceImpl.java
     │   │   │   │   ├── DeptServiceImpl.java
     │   │   │   │   └── MenuServiceImpl.java
-    │   │   │   ├── entity/                   # 数据实体
-    │   │   │   │   ├── User.java
-    │   │   │   │   ├── Role.java
-    │   │   │   │   ├── Dept.java
-    │   │   │   │   ├── Menu.java
-    │   │   │   │   ├── UserRole.java
-    │   │   │   │   └── RoleMenu.java
-    │   │   │   ├── dto/                      # 请求参数对象
-    │   │   │   │   ├── LoginDTO.java
-    │   │   │   │   └── UserQueryDTO.java
-    │   │   │   └── vo/                       # 返回视图对象
-    │   │   │       ├── UserVO.java
-    │   │   │       └── MenuTreeVO.java
+    │   │   │   ├── mapper/
+    │   │   │   │   ├── UserMapper.java
+    │   │   │   │   ├── RoleMapper.java
+    │   │   │   │   ├── DeptMapper.java
+    │   │   │   │   ├── MenuMapper.java
+    │   │   │   │   ├── UserRoleMapper.java
+    │   │   │   │   └── RoleMenuMapper.java
+    │   │   │   ├── entity/
+    │   │   │   │   ├── User.java / Role.java / Dept.java / Menu.java
+    │   │   │   │   ├── UserRole.java / RoleMenu.java
+    │   │   │   ├── dto/                      # LoginDTO / UserQueryDTO / RoleDTO / AssignRoleDTO
+    │   │   │   └── vo/                       # UserVO / MenuTreeVO / RoleVO
     │   │   │
     │   │   ├── attendance/                   # ═══ 模块2: 考勤管理 ═══
-    │   │   │   ├── controller/
-    │   │   │   │   └── AttendanceController.java  # 签到/签退/请假/统计
-    │   │   │   ├── service/
-    │   │   │   ├── service/impl/
-    │   │   │   ├── mapper/
-    │   │   │   ├── entity/
-    │   │   │   │   ├── Attendance.java       # 考勤记录
-    │   │   │   │   └── LeaveRequest.java     # 请假申请
-    │   │   │   └── dto/
+    │   │   │   ├── controller/AttendanceController.java  # 签到/签退/请假/统计
+    │   │   │   ├── service/AttendanceService.java
+    │   │   │   ├── service/impl/AttendanceServiceImpl.java  # 请假自动创建审批实例
+    │   │   │   ├── mapper/AttendanceMapper.java + LeaveRequestMapper.java
+    │   │   │   ├── entity/Attendance.java + LeaveRequest.java
+    │   │   │   └── dto/SignInDTO.java + LeaveRequestDTO.java
     │   │   │
     │   │   ├── approval/                     # ═══ 模块3: 审批中心 ═══
     │   │   │   ├── controller/
-    │   │   │   │   ├── ApprovalController.java        # 发起/待审批/已审批/审批操作
+    │   │   │   │   ├── ApprovalController.java        # 发起/待审批/已审批/审批/撤回/记录
     │   │   │   │   └── ApprovalTemplateController.java # 模板 CRUD
     │   │   │   ├── service/
-    │   │   │   │   ├── ApprovalService.java
+    │   │   │   │   ├── ApprovalService.java           # 含 cancel 撤回接口
     │   │   │   │   └── ApprovalTemplateService.java
     │   │   │   ├── service/impl/
-    │   │   │   │   ├── ApprovalServiceImpl.java       # 多级审批引擎
+    │   │   │   │   ├── ApprovalServiceImpl.java       # 多级审批引擎 + syncBusinessStatus 回调
     │   │   │   │   └── ApprovalTemplateServiceImpl.java
-    │   │   │   ├── mapper/
-    │   │   │   │   ├── ApprovalTemplateMapper.java
-    │   │   │   │   ├── ApprovalInstanceMapper.java
-    │   │   │   │   └── ApprovalRecordMapper.java
-    │   │   │   ├── entity/
-    │   │   │   │   ├── ApprovalTemplate.java
-    │   │   │   │   ├── ApprovalInstance.java
-    │   │   │   │   └── ApprovalRecord.java
-    │   │   │   └── dto/
-    │   │   │       ├── StartApprovalDTO.java
-    │   │   │       └── ApproveDTO.java
+    │   │   │   ├── mapper/ApprovalTemplateMapper.java + ApprovalInstanceMapper.java + ApprovalRecordMapper.java
+    │   │   │   ├── entity/ApprovalTemplate.java + ApprovalInstance.java + ApprovalRecord.java
+    │   │   │   └── dto/StartApprovalDTO.java + ApproveDTO.java
     │   │   │
     │   │   ├── notice/                       # ═══ 模块4: 公告通知 ═══
-    │   │   │   ├── controller/
-    │   │   │   │   └── NoticeController.java     # 公告 CRUD
-    │   │   │   ├── service/
-    │   │   │   ├── service/impl/
-    │   │   │   ├── mapper/
-    │   │   │   ├── entity/
-    │   │   │   │   └── Notice.java
-    │   │   │   └── dto/
+    │   │   │   ├── controller/NoticeController.java
+    │   │   │   ├── service/NoticeService.java + impl/NoticeServiceImpl.java
+    │   │   │   ├── mapper/NoticeMapper.java
+    │   │   │   └── entity/Notice.java
     │   │   │
     │   │   ├── schedule/                     # ═══ 模块5: 日程管理 ═══
-    │   │   │   ├── controller/
-    │   │   │   │   └── ScheduleController.java  # 日程 CRUD + 日期范围查询
-    │   │   │   ├── service/
-    │   │   │   │   └── ScheduleService.java
-    │   │   │   ├── service/impl/
-    │   │   │   │   └── ScheduleServiceImpl.java
-    │   │   │   ├── mapper/
-    │   │   │   │   └── ScheduleMapper.java
-    │   │   │   ├── entity/
-    │   │   │   │   └── Schedule.java
-    │   │   │   └── dto/
+    │   │   │   ├── controller/ScheduleController.java
+    │   │   │   ├── service/ScheduleService.java + impl/ScheduleServiceImpl.java
+    │   │   │   ├── mapper/ScheduleMapper.java
+    │   │   │   └── entity/Schedule.java
     │   │   │
-    │   │   ├── log/                          # ═══ 操作日志（AOP） ═══
-    │   │   │   ├── annotation/
-    │   │   │   │   └── Log.java               # @Log 操作日志注解
-    │   │   │   ├── aspect/
-    │   │   │   │   └── OperLogAspect.java     # AOP 切面
-    │   │   │   ├── controller/
-    │   │   │   │   └── OperLogController.java # 日志查询/清理
-    │   │   │   ├── service/
-    │   │   │   │   ├── OperLogService.java
-    │   │   │   │   └── impl/OperLogServiceImpl.java
-    │   │   │   ├── mapper/
-    │   │   │   │   └── OperLogMapper.java
-    │   │   │   └── entity/
-    │   │   │       └── OperLog.java
+    │   │   ├── expense/                      # ═══ 模块6: 报销管理 ═══
+    │   │   │   ├── controller/ExpenseController.java
+    │   │   │   ├── service/ExpenseService.java
+    │   │   │   ├── service/impl/ExpenseServiceImpl.java  # 报销自动创建审批实例
+    │   │   │   ├── mapper/ExpenseMapper.java
+    │   │   │   └── entity/ExpenseRequest.java
     │   │   │
-    │   │   └── expense/                      # ═══ 模块6: 报销管理 ═══
-    │   │       ├── controller/
-    │   │       │   └── ExpenseController.java   # 报销CRUD + 统计
-    │   │       ├── service/
-    │   │       │   └── ExpenseService.java
-    │   │       ├── service/impl/
-    │   │       │   └── ExpenseServiceImpl.java
-    │   │       ├── mapper/
-    │   │       │   └── ExpenseMapper.java
-    │   │       ├── entity/
-    │   │       │   └── ExpenseRequest.java
-    │   │       └── dto/
+    │   │   └── log/                          # ═══ 操作日志（AOP） ═══
+    │   │       ├── annotation/Log.java       # @Log 操作日志注解
+    │   │       ├── aspect/OperLogAspect.java # AOP 切面
+    │   │       ├── controller/OperLogController.java  # 日志查询/清理
+    │   │       ├── service/OperLogService.java + impl/OperLogServiceImpl.java
+    │   │       ├── mapper/OperLogMapper.java
+    │   │       └── entity/OperLog.java
     │   │
     │   └── resources/
     │       ├── application.yml               # 主配置（端口、MP、JWT、Knife4j）
     │       ├── application-dev.yml           # 开发环境（H2 数据库）
+    │       ├── application-prod.yml          # 生产环境（MySQL + HikariCP + 日志）
     │       ├── db/
     │       │   ├── schema-h2.sql             # H2 建表脚本
-    │       │   └── data.sql                  # 初始数据（admin + 菜单）
+    │       │   └── data.sql                  # 初始数据（admin + 菜单 + 审批模板）
     │       └── mapper/
     │           └── UserMapper.xml            # MyBatis XML（复杂查询）
     │
     └── test/
         └── java/com/oasystem/
-            └── OaApplicationTests.java       # Spring Boot 集成测试
-```
+            ├── OaApplicationTests.java       # Spring Boot 集成测试
+            ├── approval/service/impl/ApprovalServiceImplTest.java  # 审批引擎 15 用例
+            ├── attendance/service/impl/AttendanceServiceImplTest.java  # 考勤集成 6 用例
+            └── system/service/impl/UserServiceImplTest.java  # 用户管理 8 用例（共 22 测试）
 
 ---
 
@@ -448,25 +434,25 @@ oa-system/
 
 | 表名 | 说明 | 关键字段 |
 |------|------|---------|
-| `att_record` | 考勤记录 | user_id, attendance_date, sign_in_time, sign_out_time, status |
-| `att_leave_request` | 请假申请 | user_id, leave_type, start_date, end_date, days, status |
+| `att_record` | 考勤记录 | user_id, attendance_date, sign_in_time, sign_out_time, status, work_hours |
+| `att_leave_request` | 请假申请 | user_id, leave_type, start_date, end_date, days, status, approval_instance_id |
 
 #### 审批模块（3 表）
 
 | 表名 | 说明 | 关键字段 |
 |------|------|---------|
 | `appr_template` | 审批模板 | template_name, template_code, approvers_config(JSON), approval_levels |
-| `appr_instance` | 审批实例 | template_id, applicant_id, current_level, status, approvers_snapshot(JSON) |
+| `appr_instance` | 审批实例 | template_id, applicant_id, current_level, status, approvers_snapshot(JSON), business_type, business_id |
 | `appr_record` | 审批记录 | instance_id, level, approver_id, result |
 
 #### 其他模块（4 表）
 
-| 表名 | 说明 |
-|------|------|
-| `sys_notice` | 公告通知 |
-| `sch_schedule` | 日程管理 |
-| `exp_request` | 报销申请 |
-| `sys_oper_log` | 操作日志（AOP自动记录） |
+| 表名 | 说明 | 关键字段 |
+|------|------|---------|
+| `sys_notice` | 公告通知 | title, content, notice_type, status, is_top |
+| `sch_schedule` | 日程管理 | title, start_time, end_time, creator_id, participant_ids |
+| `exp_request` | 报销申请 | user_id, title, amount, expense_type, status, approval_instance_id |
+| `sys_oper_log` | 操作日志（AOP自动记录） | user_id, module, operation, url, status, cost_time |
 
 ### 5.3 通用字段说明
 
@@ -866,7 +852,7 @@ mvn clean package -DskipTests
 java -jar target/oa-system.jar --spring.profiles.active=prod
 ```
 
-### 10.4 CLion 运行配置
+### 10.5 CLion 运行配置
 
 1. 打开 `D:\CLion\oa-system` 目录
 2. CLion → File → Settings → Build → Maven → 设置 Maven home 为 `D:\CLion\tools\apache-maven-3.9.16`
