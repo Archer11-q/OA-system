@@ -27,6 +27,7 @@
 >- DEV-18 (2026-06-10)：考勤统计增强：签到自动判定迟到（晚于9:00）、签退自动判定早退（早于18:00）、自动计算工作时长、月度考勤汇总（出勤/迟到/早退/缺勤天数+总工时）、每日考勤状态明细（含周末识别）。
 >- DEV-19 (2026-06-10)：实现操作日志记录（AOP）：自定义 @Log 注解 + OperLogAspect 切面自动记录 Controller 关键操作（用户/模块/方法/参数/结果/IP/耗时/异常），操作日志分页查询与清理接口（Admin权限），已在全部模块的关键写操作添加 @Log 注解。
 >- DEV-20 (2026-06-10)：实现文件上传功能：通用文件上传/头像上传接口（FileController），支持文件类型校验、按日期分目录存储、UUID 重命名防冲突，WebMvcConfig 配置静态资源映射使上传文件可通过 URL 直接访问。
+>- DEV-21 (2026-06-10)：实现数据看板后端 API（DashboardController）：系统概览（用户/部门/角色/公告数量）、今日考勤统计、本月审批汇总、本月报销汇总、近7天考勤趋势、审批状态分布、报销类型分布，为前端 ECharts 图表提供数据。
 
 
 ---
@@ -580,6 +581,15 @@ POST   /oa/file/upload           ← 通用文件上传（返回URL）
 POST   /oa/file/upload/avatar    ← 头像上传（仅限图片格式）
 ```
 
+#### 数据看板 `/oa/dashboard`（✅ 已实现）
+
+```
+GET    /oa/dashboard/overview             ← 总览（系统/考勤/审批/报销概要）
+GET    /oa/dashboard/attendance-trend     ← 近7天考勤趋势
+GET    /oa/dashboard/approval-distribution ← 审批状态分布（饼图）
+GET    /oa/dashboard/expense-distribution  ← 报销类型分布（饼图）
+```
+
 ### 6.5 Knife4j 文档
 
 开发阶段访问：`http://localhost:8080/oa/doc.html`
@@ -660,13 +670,13 @@ POST   /oa/file/upload/avatar    ← 头像上传（仅限图片格式）
 - [x] 审批中心（模板 + 实例 + 多级流转 — DEV-10 + DEV-16）
 - [x] 公告通知（发布/列表/置顶 — DEV-09）
 
-### Phase 4：扩展模块（优先级：低 🟢）
+### Phase 4：扩展模块（✅ 已完成）
 
 - [x] 日程管理（DEV-15）
 - [x] 费用报销（DEV-17）
 - [x] 操作日志记录（DEV-19）
 - [x] 文件上传（头像/附件 — DEV-20）
-- [ ] 数据看板（ECharts 统计图表）
+- [x] 数据看板 API（DEV-21）
 
 ### Phase 5：上线准备
 
