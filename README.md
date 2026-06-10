@@ -22,6 +22,7 @@ D:\CLion\tools\apache-maven-3.9.16\bin\mvn spring-boot:run
 	 - DEV-05: 实现权限注入（UserDetailsService），在 JWT 认证中加载用户权限并完善 `SecurityUtils`。
 					 - DEV-06: 实现菜单管理 CRUD 与敏感接口方法级权限注解，完善权限校验（含新增/删除菜单）。
 					 - DEV-07: 实现部门管理 CRUD（新增/更新/删除/查询树），并为部门写操作添加管理员权限校验。
+																					 - DEV-08: 实现考勤模块基础（签到/签退/按月查询/请假申请），包含实体、Mapper、Service 与 Controller。
 
 详细开发文档请见 `doc/` 目录。
 

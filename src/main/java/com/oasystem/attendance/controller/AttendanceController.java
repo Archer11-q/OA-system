@@ -1,0 +1,73 @@
+package com.oasystem.attendance.controller;
+
+import com.oasystem.attendance.dto.LeaveRequestDTO;
+import com.oasystem.attendance.dto.SignInDTO;
+import com.oasystem.attendance.entity.Attendance;
+import com.oasystem.attendance.entity.LeaveRequest;
+import com.oasystem.attendance.service.AttendanceService;
+import com.oasystem.common.Result;
+import com.oasystem.security.SecurityUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@Tag(name = "考勤管理", description = "签到/签退/请假")
+@RestController
+@RequestMapping("/attendance")
+@RequiredArgsConstructor
+public class AttendanceController {
+
+    private final AttendanceService attendanceService;
+    private final SecurityUtils securityUtils;
+
+    @Operation(summary = "签到")
+    @PostMapping("/sign-in")
+    public Result<Void> signIn(@Valid @RequestBody SignInDTO dto) {
+        Long userId = securityUtils.getCurrentUserId();
+        if (userId == null) return Result.unauthorized("请先登录");
+        attendanceService.signIn(userId, dto.getLocation());
+        return Result.ok("签到成功", null);
+    }
+
+    @Operation(summary = "签退")
+    @PostMapping("/sign-out")
+    public Result<Void> signOut(@Valid @RequestBody SignInDTO dto) {
+        Long userId = securityUtils.getCurrentUserId();
+        if (userId == null) return Result.unauthorized("请先登录");
+        attendanceService.signOut(userId, dto.getLocation());
+        return Result.ok("签退成功", null);
+    }
+
+    @Operation(summary = "考勤记录（按月）")
+    @GetMapping("/records")
+    public Result<List<Attendance>> records(@RequestParam(value = "month", required = false) String month) {
+        Long userId = securityUtils.getCurrentUserId();
+        if (userId == null) return Result.unauthorized("请先登录");
+        if (month == null || month.isEmpty()) {
+            java.time.LocalDate now = java.time.LocalDate.now();
+            month = String.format("%04d-%02d", now.getYear(), now.getMonthValue());
+        }
+        return Result.ok(attendanceService.getRecords(userId, month));
+    }
+
+    @Operation(summary = "申请请假")
+    @PostMapping("/leave")
+    public Result<Long> applyLeave(@Valid @RequestBody LeaveRequestDTO dto) {
+        Long userId = securityUtils.getCurrentUserId();
+        if (userId == null) return Result.unauthorized("请先登录");
+        LeaveRequest req = new LeaveRequest();
+        req.setUserId(userId);
+        req.setLeaveType(dto.getLeaveType());
+        req.setStartDate(dto.getStartDate());
+        req.setEndDate(dto.getEndDate());
+        req.setDays(dto.getDays());
+        req.setReason(dto.getReason());
+        Long id = attendanceService.applyLeave(req);
+        return Result.ok(id);
+    }
+}
+
