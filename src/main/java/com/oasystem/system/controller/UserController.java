@@ -2,6 +2,7 @@ package com.oasystem.system.controller;
 
 import com.oasystem.common.PageResult;
 import com.oasystem.common.Result;
+import com.oasystem.log.annotation.Log;
 import com.oasystem.system.dto.UserQueryDTO;
 import com.oasystem.system.entity.User;
 import com.oasystem.system.service.UserService;
@@ -83,6 +84,7 @@ public class UserController {
                 .orElse(null));
     }
 
+    @Log(module = "用户管理", value = "新增用户")
     @Operation(summary = "新增用户")
     @PostMapping
     public Result<Void> add(@Valid @RequestBody User user) {
@@ -90,6 +92,7 @@ public class UserController {
         return Result.ok("新增成功", null);
     }
 
+    @Log(module = "用户管理", value = "更新用户")
     @Operation(summary = "更新用户")
     @PutMapping
     public Result<Void> update(@Valid @RequestBody User user) {
@@ -97,6 +100,7 @@ public class UserController {
         return Result.ok("更新成功", null);
     }
 
+    @Log(module = "用户管理", value = "删除用户")
     @Operation(summary = "删除用户")
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
@@ -104,6 +108,7 @@ public class UserController {
         return Result.ok("删除成功", null);
     }
 
+    @Log(module = "用户管理", value = "重置密码")
     @Operation(summary = "重置用户密码")
     @PutMapping("/{id}/reset-pwd")
     public Result<Void> resetPassword(@PathVariable Long id) {

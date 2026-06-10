@@ -6,6 +6,7 @@ import com.oasystem.attendance.entity.Attendance;
 import com.oasystem.attendance.entity.LeaveRequest;
 import com.oasystem.attendance.service.AttendanceService;
 import com.oasystem.common.Result;
+import com.oasystem.log.annotation.Log;
 import com.oasystem.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,6 +29,7 @@ public class AttendanceController {
     private final AttendanceService attendanceService;
     private final SecurityUtils securityUtils;
 
+    @Log(module = "考勤管理", value = "签到")
     @Operation(summary = "签到")
     @PostMapping("/sign-in")
     public Result<Void> signIn(@Valid @RequestBody SignInDTO dto) {
@@ -37,6 +39,7 @@ public class AttendanceController {
         return Result.ok("签到成功", null);
     }
 
+    @Log(module = "考勤管理", value = "签退")
     @Operation(summary = "签退")
     @PostMapping("/sign-out")
     public Result<Void> signOut(@Valid @RequestBody SignInDTO dto) {
@@ -59,6 +62,7 @@ public class AttendanceController {
         return Result.ok(attendanceService.getRecords(userId, month));
     }
 
+    @Log(module = "考勤管理", value = "申请请假")
     @Operation(summary = "申请请假")
     @PostMapping("/leave")
     public Result<Long> applyLeave(@Valid @RequestBody LeaveRequestDTO dto) {

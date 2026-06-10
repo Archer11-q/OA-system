@@ -1,6 +1,7 @@
 package com.oasystem.system.controller;
 
 import com.oasystem.common.Result;
+import com.oasystem.log.annotation.Log;
 import com.oasystem.system.dto.LoginDTO;
 import com.oasystem.system.service.UserService;
 import com.oasystem.system.vo.UserVO;
@@ -25,6 +26,7 @@ public class AuthController {
 
     private final UserService userService;
 
+    @Log(module = "认证管理", value = "用户登录")
     @Operation(summary = "用户登录")
     @PostMapping("/login")
     public Result<Map<String, Object>> login(@Valid @RequestBody LoginDTO loginDTO) {

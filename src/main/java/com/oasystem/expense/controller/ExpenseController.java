@@ -3,6 +3,7 @@ package com.oasystem.expense.controller;
 import com.oasystem.common.Result;
 import com.oasystem.expense.entity.ExpenseRequest;
 import com.oasystem.expense.service.ExpenseService;
+import com.oasystem.log.annotation.Log;
 import com.oasystem.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -48,6 +49,7 @@ public class ExpenseController {
         return Result.ok(e);
     }
 
+    @Log(module = "报销管理", value = "提交报销")
     @Operation(summary = "提交报销申请")
     @PostMapping
     public Result<Void> create(@Valid @RequestBody ExpenseRequest expense) {

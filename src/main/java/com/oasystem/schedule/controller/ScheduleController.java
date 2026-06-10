@@ -1,6 +1,7 @@
 package com.oasystem.schedule.controller;
 
 import com.oasystem.common.Result;
+import com.oasystem.log.annotation.Log;
 import com.oasystem.schedule.entity.Schedule;
 import com.oasystem.schedule.service.ScheduleService;
 import com.oasystem.security.SecurityUtils;
@@ -56,6 +57,7 @@ public class ScheduleController {
         return Result.ok(s);
     }
 
+    @Log(module = "日程管理", value = "新增日程")
     @Operation(summary = "新增日程")
     @PostMapping
     public Result<Void> create(@Valid @RequestBody Schedule schedule) {

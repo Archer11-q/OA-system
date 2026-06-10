@@ -1,6 +1,7 @@
 package com.oasystem.notice.controller;
 
 import com.oasystem.common.Result;
+import com.oasystem.log.annotation.Log;
 import com.oasystem.notice.entity.Notice;
 import com.oasystem.notice.service.NoticeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,6 +35,7 @@ public class NoticeController {
         return Result.ok(n);
     }
 
+    @Log(module = "公告通知", value = "发布公告")
     @Operation(summary = "发布公告（管理员）")
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
@@ -42,6 +44,7 @@ public class NoticeController {
         return Result.ok("发布成功", null);
     }
 
+    @Log(module = "公告通知", value = "编辑公告")
     @Operation(summary = "编辑公告（管理员）")
     @PutMapping
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
@@ -50,6 +53,7 @@ public class NoticeController {
         return Result.ok("更新成功", null);
     }
 
+    @Log(module = "公告通知", value = "删除公告")
     @Operation(summary = "删除公告（管理员）")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")

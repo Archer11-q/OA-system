@@ -6,6 +6,7 @@ import com.oasystem.approval.entity.ApprovalInstance;
 import com.oasystem.approval.entity.ApprovalRecord;
 import com.oasystem.approval.service.ApprovalService;
 import com.oasystem.common.Result;
+import com.oasystem.log.annotation.Log;
 import com.oasystem.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,6 +28,7 @@ public class ApprovalController {
     private final ApprovalService approvalService;
     private final SecurityUtils securityUtils;
 
+    @Log(module = "审批中心", value = "发起审批")
     @Operation(summary = "发起审批")
     @PostMapping("/start")
     public Result<Long> start(@Valid @RequestBody StartApprovalDTO dto) {
@@ -60,6 +62,7 @@ public class ApprovalController {
         return Result.ok(approvalService.getMy(userId));
     }
 
+    @Log(module = "审批中心", value = "审批操作")
     @Operation(summary = "审批操作（同意/驳回）")
     @PostMapping("/{id}/approve")
     public Result<Void> approve(@PathVariable("id") Long id, @Valid @RequestBody ApproveDTO dto) {

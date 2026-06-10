@@ -252,6 +252,27 @@ CREATE TABLE sch_schedule (
     remark         VARCHAR(500)  DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='日程管理';
 
+-- ---------- 系统日志 ----------
+CREATE TABLE sys_oper_log (
+    id             BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id        BIGINT       DEFAULT NULL COMMENT '操作人ID',
+    username       VARCHAR(32)  DEFAULT NULL COMMENT '操作人用户名',
+    module         VARCHAR(64)  DEFAULT NULL COMMENT '操作模块',
+    operation      VARCHAR(128) DEFAULT NULL COMMENT '操作描述',
+    method         VARCHAR(256) DEFAULT NULL COMMENT '请求方法',
+    request_method VARCHAR(16)  DEFAULT NULL COMMENT '请求方式',
+    url            VARCHAR(256) DEFAULT NULL COMMENT '请求URL',
+    ip             VARCHAR(64)  DEFAULT NULL COMMENT '操作IP',
+    request_params TEXT         DEFAULT NULL COMMENT '请求参数',
+    result         TEXT         DEFAULT NULL COMMENT '返回结果',
+    cost_time      BIGINT       DEFAULT 0   COMMENT '耗时(毫秒)',
+    status         TINYINT      DEFAULT 1   COMMENT '状态(0失败,1成功)',
+    error_msg      VARCHAR(1024) DEFAULT NULL COMMENT '错误信息',
+    create_time    DATETIME     DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_oper_log_user (user_id),
+    INDEX idx_oper_log_time (create_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='操作日志';
+
 -- ---------- 报销 ----------
 CREATE TABLE exp_request (
     id               BIGINT AUTO_INCREMENT PRIMARY KEY,
