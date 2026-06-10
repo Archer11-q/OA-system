@@ -29,6 +29,10 @@ spring:
       schema-locations: classpath:db/schema-h2.sql
       data-locations: classpath:db/data.sql
       continue-on-error: true
+  # DevTools 配置（Windows 需禁用文件监控 inotify）
+  devtools:
+    restart:
+      enabled: false
 
 # ==============================================
 # 开发环境日志
