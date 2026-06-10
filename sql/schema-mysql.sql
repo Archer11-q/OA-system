@@ -168,6 +168,7 @@ CREATE TABLE appr_template (
     description     VARCHAR(256) DEFAULT NULL,
     approval_levels TINYINT      DEFAULT 1,
     status          TINYINT      DEFAULT 1,
+    approvers_config TEXT         DEFAULT NULL COMMENT '审批人配置(JSON)',
     create_time     DATETIME     DEFAULT CURRENT_TIMESTAMP,
     update_time     DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     create_by       BIGINT       DEFAULT NULL,
@@ -185,6 +186,7 @@ CREATE TABLE appr_instance (
     total_levels  TINYINT       DEFAULT 1,
     current_level TINYINT       DEFAULT 1,
     status        TINYINT       DEFAULT 0,
+    approvers_snapshot TEXT     DEFAULT NULL COMMENT '审批人快照(JSON)',
     finish_time   DATETIME      DEFAULT NULL,
     create_time   DATETIME      DEFAULT CURRENT_TIMESTAMP,
     update_time   DATETIME      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -270,3 +272,7 @@ CREATE TABLE exp_request (
     deleted          TINYINT        DEFAULT 0,
     remark           VARCHAR(500)   DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='报销申请';
+
+-- ========== 索引 ==========
+CREATE INDEX idx_appr_record_approver ON appr_record(approver_id, result);
+CREATE INDEX idx_appr_instance_applicant ON appr_instance(applicant_id, status);

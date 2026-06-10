@@ -27,4 +27,7 @@ public class ApprovalTemplate extends BaseEntity {
 
     /** 状态（0=禁用，1=启用） */
     private Integer status;
+
+    /** 审批人配置（JSON数组，定义每级审批人解析规则） */
+    private String approversConfig;
 }

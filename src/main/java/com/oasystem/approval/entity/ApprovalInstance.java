@@ -36,6 +36,9 @@ public class ApprovalInstance extends BaseEntity {
     /** 状态（0=审批中，1=已通过，2=已驳回，3=已撤回） */
     private Integer status;
 
+    /** 审批人快照（JSON数组，启动时解析的审批人ID列表） */
+    private String approversSnapshot;
+
     /** 完成时间 */
     private LocalDateTime finishTime;
 }

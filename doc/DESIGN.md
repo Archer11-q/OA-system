@@ -22,6 +22,7 @@
 >- DEV-13 (2026-06-10)：完善菜单管理：新增菜单与更新接口加入 perms 唯一性校验，新增菜单更新接口，删除时清理角色-菜单关联。
 >- DEV-14 (2026-06-10)：菜单删除安全性增强：禁止删除已被角色引用的菜单，要求先从角色中移除引用后再删除。
 >- DEV-15 (2026-06-10)：实现日程管理模块 CRUD（ScheduleMapper/Service/Controller），支持按日期范围查询、新增/更新/删除日程，个人日程权限控制（仅创建人可修改/删除）。
+>- DEV-16 (2026-06-10)：完善审批中心多级审批引擎：审批人配置（DEPT_LEADER/ROLE/USER三种类型）、审批人解析与快照、预创建审批记录、审批权限验证（用户只能审批自己负责的级别）、审批模板 CRUD（Admin权限管理）、统一使用 BusinessException 处理业务异常。
 
 
 ---
@@ -192,15 +193,26 @@ oa-system/
     │   │   │   └── dto/
     │   │   │
     │   │   ├── approval/                     # ═══ 模块3: 审批中心 ═══
-    │   │   │   ├── controller/               # 发起/审批/查询（待实现）
+    │   │   │   ├── controller/
+    │   │   │   │   ├── ApprovalController.java        # 发起/待审批/已审批/审批操作
+    │   │   │   │   └── ApprovalTemplateController.java # 模板 CRUD
     │   │   │   ├── service/
+    │   │   │   │   ├── ApprovalService.java
+    │   │   │   │   └── ApprovalTemplateService.java
     │   │   │   ├── service/impl/
+    │   │   │   │   ├── ApprovalServiceImpl.java       # 多级审批引擎
+    │   │   │   │   └── ApprovalTemplateServiceImpl.java
     │   │   │   ├── mapper/
+    │   │   │   │   ├── ApprovalTemplateMapper.java
+    │   │   │   │   ├── ApprovalInstanceMapper.java
+    │   │   │   │   └── ApprovalRecordMapper.java
     │   │   │   ├── entity/
-    │   │   │   │   ├── ApprovalTemplate.java # 审批模板
-    │   │   │   │   ├── ApprovalInstance.java # 审批实例
-    │   │   │   │   └── ApprovalRecord.java   # 审批记录
+    │   │   │   │   ├── ApprovalTemplate.java
+    │   │   │   │   ├── ApprovalInstance.java
+    │   │   │   │   └── ApprovalRecord.java
     │   │   │   └── dto/
+    │   │   │       ├── StartApprovalDTO.java
+    │   │   │       └── ApproveDTO.java
     │   │   │
     │   │   ├── notice/                       # ═══ 模块4: 公告通知 ═══
     │   │   │   ├── controller/               # 公告发布/列表（待实现）
@@ -298,15 +310,20 @@ oa-system/
 
 ---
 
-### 4.3 模块3：审批中心（部分实现 / DEV-10 已加入代码骨架）
+### 4.3 模块3：审批中心（✅ 多级审批引擎已实现）
 
-当前状态：
-- 审批中心基础数据结构（审批模板/实例/记录）与相关实体已规划并部分实现（DEV-10）
-- 发起审批、待审批/已审批/我的申请查询、审批记录查询的骨架/接口已初步实现或留接口位置
+当前实现（DEV-10 + DEV-16）：
+- 审批模板管理：✅ 模板 CRUD 已实现（`ApprovalTemplateController`），模板中配置审批人规则（DEPT_LEADER/ROLE/USER）
+- 发起审批：✅ 自动解析审批人、生成快照、预创建各级审批记录
+- 待审批列表：✅ 按当前用户+当前审批级别精确匹配
+- 已审批/我的申请：✅ 按用户过滤并排序
+- 审批操作：✅ 同意推进下一级/驳回结束，严格校验审批人身份
+- 审批记录查询：✅ 按实例ID查询各级审批意见
 
 待完善：
-- 完整的多级审批引擎（流转、并行/串行策略、拒绝/回退逻辑）需要补充实现与测试
-- 与考勤/报销等模块的审批集成
+- 与考勤/报销等模块的审批集成（请假/报销自动创建审批实例）
+- 审批撤回功能（申请人撤回已提交的审批）
+- 并行审批策略（同一级别多人审批，任一人同意即可）
 
 ---
 
@@ -481,14 +498,21 @@ GET    /oa/attendance/leave/list ← 请假列表
 PUT    /oa/attendance/leave/{id}/approve ← 审批请假
 ```
 
-#### 审批中心 `/oa/approval`
+#### 审批中心 `/oa/approval`（✅ 多级审批引擎已实现）
 
 ```
-POST   /oa/approval/start       ← 发起审批
-GET    /oa/approval/todo        ← 待审批列表
+POST   /oa/approval/start       ← 发起审批（自动解析审批人+预创建记录）
+GET    /oa/approval/todo        ← 待审批列表（按当前用户+当前级别匹配）
 GET    /oa/approval/done        ← 已审批列表
 GET    /oa/approval/my          ← 我的申请
-POST   /oa/approval/{id}/approve ← 审批操作（同意/驳回）
+POST   /oa/approval/{id}/approve ← 审批操作（同意/驳回，身份验证）
+GET    /oa/approval/{id}/records ← 审批记录
+
+GET    /oa/approval/template/list  ← 模板列表
+GET    /oa/approval/template/{id}  ← 模板详情
+POST   /oa/approval/template       ← 新增模板（Admin）
+PUT    /oa/approval/template       ← 更新模板（Admin）
+DELETE /oa/approval/template/{id}  ← 删除模板（Admin）
 ```
 
 #### 公告通知 `/oa/notice`
@@ -602,10 +626,10 @@ PUT    /oa/expense/{id}/approve ← 审批报销
 
 ### Phase 3：核心业务模块（优先级：中 🟡）
 
-- [ ] 考勤打卡（签到/签退）
-- [ ] 请假申请 + 审批流程
-- [ ] 审批中心（模板 + 实例 + 多级流转）
-- [ ] 公告通知（发布/列表/置顶）
+- [x] 考勤打卡（签到/签退 — DEV-08）
+- [x] 请假申请 + 审批流程（DEV-08）
+- [x] 审批中心（模板 + 实例 + 多级流转 — DEV-10 + DEV-16）
+- [x] 公告通知（发布/列表/置顶 — DEV-09）
 
 ### Phase 4：扩展模块（优先级：低 🟢）
 

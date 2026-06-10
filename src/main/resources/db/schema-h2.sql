@@ -151,13 +151,14 @@ CREATE TABLE IF NOT EXISTS appr_template (
     template_code   VARCHAR(32)  NOT NULL UNIQUE COMMENT '模板编码',
     description     VARCHAR(256) DEFAULT NULL COMMENT '模板描述',
     approval_levels TINYINT      DEFAULT 1   COMMENT '审批级数',
-    status          TINYINT      DEFAULT 1   COMMENT '状态',
-    create_time     DATETIME     DEFAULT CURRENT_TIMESTAMP,
-    update_time     DATETIME     DEFAULT CURRENT_TIMESTAMP,
-    create_by       BIGINT       DEFAULT NULL,
-    update_by       BIGINT       DEFAULT NULL,
-    deleted         TINYINT      DEFAULT 0,
-    remark          VARCHAR(500) DEFAULT NULL
+    status           TINYINT      DEFAULT 1   COMMENT '状态',
+    approvers_config TEXT         DEFAULT NULL COMMENT '审批人配置(JSON)',
+    create_time      DATETIME     DEFAULT CURRENT_TIMESTAMP,
+    update_time      DATETIME     DEFAULT CURRENT_TIMESTAMP,
+    create_by        BIGINT       DEFAULT NULL,
+    update_by        BIGINT       DEFAULT NULL,
+    deleted          TINYINT      DEFAULT 0,
+    remark           VARCHAR(500) DEFAULT NULL
 );
 
 -- 审批实例表
@@ -170,6 +171,7 @@ CREATE TABLE IF NOT EXISTS appr_instance (
     total_levels  TINYINT       DEFAULT 1   COMMENT '总审批级数',
     current_level TINYINT       DEFAULT 1   COMMENT '当前审批级别',
     status        TINYINT       DEFAULT 0   COMMENT '状态(0审批中 1已通过 2已驳回 3已撤回)',
+    approvers_snapshot TEXT     DEFAULT NULL COMMENT '审批人快照(JSON)',
     finish_time   DATETIME      DEFAULT NULL COMMENT '完成时间',
     create_time   DATETIME      DEFAULT CURRENT_TIMESTAMP,
     update_time   DATETIME      DEFAULT CURRENT_TIMESTAMP,
@@ -273,3 +275,5 @@ CREATE INDEX IF NOT EXISTS idx_approval_status ON appr_instance(status);
 CREATE INDEX IF NOT EXISTS idx_notice_status_time ON sys_notice(status, publish_time);
 CREATE INDEX IF NOT EXISTS idx_schedule_time ON sch_schedule(start_time, end_time);
 CREATE INDEX IF NOT EXISTS idx_expense_user ON exp_request(user_id);
+CREATE INDEX IF NOT EXISTS idx_appr_record_approver ON appr_record(approver_id, result);
+CREATE INDEX IF NOT EXISTS idx_appr_instance_applicant ON appr_instance(applicant_id, status);

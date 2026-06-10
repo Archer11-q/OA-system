@@ -1,6 +1,7 @@
 package com.oasystem.approval.controller;
 
 import com.oasystem.approval.dto.ApproveDTO;
+import com.oasystem.approval.dto.StartApprovalDTO;
 import com.oasystem.approval.entity.ApprovalInstance;
 import com.oasystem.approval.entity.ApprovalRecord;
 import com.oasystem.approval.service.ApprovalService;
@@ -14,6 +15,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * 审批中心 Controller — 发起审批/待审批/已审批/我的申请/审批操作
+ */
 @Tag(name = "审批中心", description = "发起审批/待审批/已审批/我的申请/审批操作")
 @RestController
 @RequestMapping("/approval")
@@ -25,11 +29,10 @@ public class ApprovalController {
 
     @Operation(summary = "发起审批")
     @PostMapping("/start")
-    public Result<Long> start(@Valid @RequestBody ApprovalInstance instance) {
+    public Result<Long> start(@Valid @RequestBody StartApprovalDTO dto) {
         Long userId = securityUtils.getCurrentUserId();
         if (userId == null) return Result.unauthorized("请先登录");
-        instance.setApplicantId(userId);
-        Long id = approvalService.start(instance);
+        Long id = approvalService.start(dto, userId);
         return Result.ok(id);
     }
 
@@ -72,4 +75,3 @@ public class ApprovalController {
         return Result.ok(approvalService.getRecords(id));
     }
 }
-
