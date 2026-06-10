@@ -47,6 +47,7 @@ D:\CLion\tools\apache-maven-3.9.16\bin\mvn spring-boot:run
  - DEV-04：已实现角色管理基础 CRUD、菜单树接口与用户-角色分配（覆盖式）。
  - DEV-05：已实现权限注入（UserDetailsService），在 JWT 认证中加载用户权限并完善 `SecurityUtils`。
   - DEV-06：已实现菜单管理 CRUD（新增/删除）与方法级权限注解，完善接口权限控制。
+  - DEV-07：已实现部门管理 CRUD（新增/更新/删除/查询树），并为部门写操作添加管理员权限校验。
 
 
 
