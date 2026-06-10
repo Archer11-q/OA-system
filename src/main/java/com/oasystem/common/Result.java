@@ -62,4 +62,8 @@ public class Result<T> implements Serializable {
     public static <T> Result<T> notFound(String message) {
         return new Result<>(404, message, null, System.currentTimeMillis());
     }
+
+    public static <T> Result<T> badRequest(String message) {
+        return new Result<>(400, message, null, System.currentTimeMillis());
+    }
 }

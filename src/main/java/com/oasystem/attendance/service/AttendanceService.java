@@ -1,4 +1,4 @@
-rpackage com.oasystem.attendance.service;
+package com.oasystem.attendance.service;
 
 import com.oasystem.attendance.entity.Attendance;
 import com.oasystem.attendance.entity.LeaveRequest;
