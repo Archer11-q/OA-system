@@ -577,6 +577,14 @@ PUT    /oa/expense/{id}/approve ← 审批报销
 - [ ] 用户-角色分配、角色-菜单分配
 - [ ] 前端项目初始化（Vue 3 + Element Plus）对接接口
 
+**当前迭代**：DEV-06（菜单管理 CRUD — 进行中）
+
+- 本次迭代目标：
+  1. 补全 `MenuController` 的 CRUD 接口实现（增/删/改/查树）及对应 `MenuService` 实现；
+  2. 在关键写操作接口添加方法级权限注解（例如 `@PreAuthorize("hasAuthority('sys:menu:edit')")`）；
+  3. 更新 `doc/DESIGN.md`、`README.md` 的进度记录；
+  4. 将本地生成的构建产物与 IDE 临时文件确认后同步写入 `.gitignore`（若新增未跟踪文件）。
+
 ### Phase 3：核心业务模块（优先级：中 🟡）
 
 - [ ] 考勤打卡（签到/签退）
