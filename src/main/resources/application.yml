@@ -24,6 +24,14 @@ spring:
       max-request-size: 50MB
 
 # ==============================================
+# OA 自定义配置
+# ==============================================
+oa:
+  upload:
+    path: ./uploads          # 文件上传目录
+    allowed-extensions: jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,txt,zip  # 允许的文件类型
+
+# ==============================================
 # MyBatis-Plus 配置
 # ==============================================
 mybatis-plus:
