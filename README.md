@@ -43,8 +43,9 @@ D:\CLion\tools\apache-maven-3.9.16\bin\mvn spring-boot:run
  - DEV-24：单元测试（JUnit 5 + Mockito 覆盖三大核心 Service，19 测试用例全部通过）
  - DEV-25：报销申请与审批中心集成（自动创建审批实例+审批完成回调同步状态）
  - DEV-26：审批撤回功能（申请人撤回审批中实例+同步业务状态）
+ - DEV-27：Docker 部署（Dockerfile 多阶段构建 + docker-compose.yml MySQL+App）
 
-Phase 5（上线准备）：MySQL 配置 + 单元测试已完成，Docker 待开始。审批流程闭环（发起→多级流转→撤回→终态回调）已完整实现。
+Phase 5（上线准备）：MySQL 配置 / 单元测试 / Docker 部署已完成。
 
 说明与注意：
 - `doc/DESIGN.md` 是主设计与迭代记录文档，后续请以该文件为权威进度记录。README 只保留高层摘要与启动说明。
@@ -58,6 +59,6 @@ Phase 5（上线准备）：MySQL 配置 + 单元测试已完成，Docker 待开
 
 | 优先级 | 方向 | 说明 |
 |--------|------|------|
-| 🟢 | Phase 5 - Docker 部署 | Dockerfile + docker-compose.yml |
 | 🟢 | 前端项目初始化 | Vue 3 + Element Plus，对接后端 API |
 | 🟢 | 并行审批策略 | 同一级别多人审批，任一人同意即可 |
+| 🟢 | 接口文档完善 | 补充 Knife4j 文档注解细节 |

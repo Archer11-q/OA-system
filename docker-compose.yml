@@ -1,0 +1,70 @@
+version: "3.8"
+
+# ==============================================
+# OA System - Docker Compose 部署
+# 启动: docker-compose up -d
+# 查看: docker-compose logs -f oa-app
+# 停止: docker-compose down
+# ==============================================
+
+services:
+  # ========== MySQL 数据库 ==========
+  mysql:
+    image: mysql:8.0
+    container_name: oa-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: oa_system
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./sql/schema-mysql.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - oa-network
+
+  # ========== OA 后端应用 ==========
+  oa-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: oa-app
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      # 数据源配置（覆盖 application-prod.yml 默认值）
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/oa_system?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_PROFILES_ACTIVE: prod
+      TZ: Asia/Shanghai
+      # 文件上传路径
+      OA_UPLOAD_PATH: /app/uploads
+    volumes:
+      - app-uploads:/app/uploads
+      - app-logs:/app/logs
+    networks:
+      - oa-network
+
+volumes:
+  mysql-data:
+  app-uploads:
+  app-logs:
+
+networks:
+  oa-network:
+    driver: bridge

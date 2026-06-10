@@ -33,6 +33,7 @@
 >- DEV-24 (2026-06-10)：单元测试：JUnit 5 + Mockito 覆盖 ApprovalServiceImpl（多级审批引擎 12 用例）、AttendanceServiceImpl（请假审批集成 6 用例）、UserServiceImpl（登录/用户管理/密码重置 8 用例），全部 19 个测试通过。
 >- DEV-25 (2026-06-10)：报销申请与审批中心集成：员工提交报销自动创建审批实例走多级审批流，审批完成后自动同步报销状态（复用 DEV-22 business_type/business_id 回调机制）；exp_request 表新增 approval_instance_id；预设报销审批模板（部门负责人→管理员 2级审批）。
 >- DEV-26 (2026-06-10)：审批撤回功能：申请人可撤回自己审批中的实例（POST /approval/{id}/cancel），撤回后同步更新关联业务记录状态；新增 3 个撤回测试用例，累计 22 测试全部通过。
+>- DEV-27 (2026-06-10)：Docker 部署：Dockerfile（多阶段构建：Maven 编译 + JRE 运行镜像）+ docker-compose.yml（MySQL 8.0 + OA 应用，健康检查+数据卷持久化），MySQL 初始化脚本自动导入。
 
 
 ---
@@ -738,7 +739,7 @@ GET    /oa/dashboard/expense-distribution  ← 报销类型分布（饼图）
 - [x] 切换到 MySQL（DEV-23：application-prod.yml + HikariCP 连接池 + 日志）
 - [x] 单元测试（DEV-24：JUnit 5 + Mockito 覆盖 Approval/Attendance/User 三大核心 Service）
 - [ ] 性能优化（索引/缓存）
-- [ ] Docker 部署脚本
+- [x] Docker 部署脚本（DEV-27：Dockerfile 多阶段构建 + docker-compose.yml）
 - [ ] 接口文档完善
 
 ---
@@ -828,7 +829,33 @@ D:\CLion\tools\apache-maven-3.9.16\bin\mvn spring-boot:run
 
 修改 `application-dev.yml` 中的数据源配置，注释 H2 部分，启用 MySQL 部分。
 
-### 10.3 打包部署
+### 10.3 Docker 部署（推荐生产环境）
+
+```bash
+# 1. 进入项目目录
+cd D:\CLion\oa-system
+
+# 2. 启动所有服务（MySQL + OA 应用）
+docker-compose up -d
+
+# 3. 查看日志
+docker-compose logs -f oa-app
+
+# 4. 停止服务
+docker-compose down
+
+# 5. 停止并清除数据卷
+docker-compose down -v
+```
+
+访问：`http://localhost:8080/oa`
+
+**Docker 架构说明**：
+- `mysql` 容器：MySQL 8.0，首次启动自动执行 `sql/schema-mysql.sql` 建表
+- `oa-app` 容器：Spring Boot 应用，等待 MySQL 健康检查通过后启动
+- 数据持久化：MySQL 数据、上传文件、应用日志均通过 Docker Volume 持久化
+
+### 10.4 打包部署
 
 ```bash
 # 打包为可执行 JAR
