@@ -161,10 +161,12 @@ oa-system/
     │   │   │   ├── controller/
     │   │   │   │   ├── AuthController.java   # 登录/登出/用户信息
     │   │   │   │   ├── UserController.java   # 用户 CRUD + 重置密码
-    │   │   │   │   ├── RoleController.java   # 角色管理（待实现）
-    │   │   │   │   ├── DeptController.java   # 部门管理（待实现）
-    │   │   │   │   └── MenuController.java   # 菜单/权限管理（待实现）
-    │   │   │   ├── service/                  # 业务接口
+    │   │   │   │   ├── RoleController.java   # 角色 CRUD + 菜单分配
+    │   │   │   │   ├── DeptController.java   # 部门 CRUD + 部门树
+    │   │   │   │   ├── MenuController.java   # 菜单/权限管理
+    │   │   │   │   ├── FileController.java    # 文件上传
+    │   │   │   │   └── DashboardController.java # 数据看板
+    │   │   │   │   ├── DashboardController.java # 数据看板
     │   │   │   │   └── UserService.java
     │   │   │   ├── service/impl/             # 业务实现
     │   │   │   │   └── UserServiceImpl.java  # 登录认证 + 用户管理
@@ -173,6 +175,16 @@ oa-system/
     │   │   │   │   ├── RoleMapper.java
     │   │   │   │   ├── DeptMapper.java
     │   │   │   │   └── MenuMapper.java
+    │   │   │   ├── service/
+    │   │   │   │   ├── UserService.java
+    │   │   │   │   ├── RoleService.java
+    │   │   │   │   ├── DeptService.java
+    │   │   │   │   └── MenuService.java
+    │   │   │   ├── service/impl/
+    │   │   │   │   ├── UserServiceImpl.java
+    │   │   │   │   ├── RoleServiceImpl.java
+    │   │   │   │   ├── DeptServiceImpl.java
+    │   │   │   │   └── MenuServiceImpl.java
     │   │   │   ├── entity/                   # 数据实体
     │   │   │   │   ├── User.java
     │   │   │   │   ├── Role.java
@@ -188,7 +200,8 @@ oa-system/
     │   │   │       └── MenuTreeVO.java
     │   │   │
     │   │   ├── attendance/                   # ═══ 模块2: 考勤管理 ═══
-    │   │   │   ├── controller/               # 打卡、请假（待实现）
+    │   │   │   ├── controller/
+    │   │   │   │   └── AttendanceController.java  # 签到/签退/请假/统计
     │   │   │   ├── service/
     │   │   │   ├── service/impl/
     │   │   │   ├── mapper/
@@ -220,7 +233,8 @@ oa-system/
     │   │   │       └── ApproveDTO.java
     │   │   │
     │   │   ├── notice/                       # ═══ 模块4: 公告通知 ═══
-    │   │   │   ├── controller/               # 公告发布/列表（待实现）
+    │   │   │   ├── controller/
+    │   │   │   │   └── NoticeController.java     # 公告 CRUD
     │   │   │   ├── service/
     │   │   │   ├── service/impl/
     │   │   │   ├── mapper/
@@ -240,6 +254,21 @@ oa-system/
     │   │   │   ├── entity/
     │   │   │   │   └── Schedule.java
     │   │   │   └── dto/
+    │   │   │
+    │   │   ├── log/                          # ═══ 操作日志（AOP） ═══
+    │   │   │   ├── annotation/
+    │   │   │   │   └── Log.java               # @Log 操作日志注解
+    │   │   │   ├── aspect/
+    │   │   │   │   └── OperLogAspect.java     # AOP 切面
+    │   │   │   ├── controller/
+    │   │   │   │   └── OperLogController.java # 日志查询/清理
+    │   │   │   ├── service/
+    │   │   │   │   ├── OperLogService.java
+    │   │   │   │   └── impl/OperLogServiceImpl.java
+    │   │   │   ├── mapper/
+    │   │   │   │   └── OperLogMapper.java
+    │   │   │   └── entity/
+    │   │   │       └── OperLog.java
     │   │   │
     │   │   └── expense/                      # ═══ 模块6: 报销管理 ═══
     │   │       ├── controller/
@@ -286,10 +315,11 @@ oa-system/
 - 删除用户：✅ DELETE `/oa/system/user/{id}`（逻辑删除）
 - 重置密码：✅ PUT `/oa/system/user/{id}/reset-pwd`（重置为 123456）
 
-#### 4.1.2 角色管理（部分实现 / 待完善）
+#### 4.1.2 角色管理（✅ 已实现）
 
-- 角色 CRUD：部分实现（编码唯一性校验已加），仍需补充完整的角色菜单分配页面和接口测试
-- 用户-角色关联：接口与服务（覆盖式分配/移除）已实现基础逻辑，但前端/接口文档仍需补全
+- 角色 CRUD：✅ 已实现，包含编码唯一性校验、删除前检查用户引用
+- 用户-角色关联：✅ 接口与服务（覆盖式分配/移除）已实现
+- 角色-菜单分配：✅ 已实现菜单权限批量分配
 
 #### 4.1.3 部门管理（已实现基础功能）
 
@@ -419,17 +449,18 @@ oa-system/
 
 | 表名 | 说明 | 关键字段 |
 |------|------|---------|
-| `appr_template` | 审批模板 | template_name, template_code, approval_levels |
-| `appr_instance` | 审批实例 | template_id, applicant_id, current_level, status |
+| `appr_template` | 审批模板 | template_name, template_code, approvers_config(JSON), approval_levels |
+| `appr_instance` | 审批实例 | template_id, applicant_id, current_level, status, approvers_snapshot(JSON) |
 | `appr_record` | 审批记录 | instance_id, level, approver_id, result |
 
-#### 其他模块（3 表）
+#### 其他模块（4 表）
 
 | 表名 | 说明 |
 |------|------|
 | `sys_notice` | 公告通知 |
 | `sch_schedule` | 日程管理 |
 | `exp_request` | 报销申请 |
+| `sys_oper_log` | 操作日志（AOP自动记录） |
 
 ### 5.3 通用字段说明
 
@@ -494,9 +525,9 @@ DELETE /oa/system/user/{id}     ← 删除用户（逻辑删除）
 PUT    /oa/system/user/{id}/reset-pwd  ← 重置密码
 ```
 
-### 6.4 待实现接口（规划）
+### 6.4 业务模块接口（✅ 全部已实现）
 
-#### 角色管理 `/oa/system/role`
+#### 角色管理 `/oa/system/role`（✅ 已实现）
 
 ```
 GET    /oa/system/role/list     ← 角色列表
@@ -505,6 +536,25 @@ POST   /oa/system/role          ← 新增角色
 PUT    /oa/system/role          ← 更新角色
 DELETE /oa/system/role/{id}     ← 删除角色
 PUT    /oa/system/role/{id}/menus ← 分配菜单权限
+```
+
+#### 部门管理 `/oa/system/dept`（✅ 已实现）
+
+```
+GET    /oa/system/dept/list      ← 部门列表（树形结构）
+GET    /oa/system/dept/{id}      ← 部门详情
+POST   /oa/system/dept           ← 新增部门
+PUT    /oa/system/dept           ← 更新部门
+DELETE /oa/system/dept/{id}      ← 删除部门
+```
+
+#### 菜单管理 `/oa/system/menu`（✅ 已实现）
+
+```
+GET    /oa/system/menu/tree      ← 菜单树（按用户权限）
+POST   /oa/system/menu           ← 新增菜单
+PUT    /oa/system/menu           ← 更新菜单
+DELETE /oa/system/menu/{id}      ← 删除菜单
 ```
 
 #### 考勤管理 `/oa/attendance`（✅ 已实现 + 统计增强）

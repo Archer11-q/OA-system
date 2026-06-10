@@ -26,18 +26,36 @@ D:\CLion\tools\apache-maven-3.9.16\bin\mvn spring-boot:run
 
 主要开发/迭代记录简要（最新在 `doc/DESIGN.md` 中）：
 
- - DEV-01..DEV-03：项目骨架、JWT + Security、基础文档与健康检查
- - DEV-04..DEV-07：角色/菜单/部门 管理与权限初步实现
- - DEV-06：菜单管理 CRUD（已完成）
- - DEV-08：考勤模块基础实现（签到/签退/请假）
- - DEV-09：公告模块基础实现
+ - DEV-01..DEV-07：项目骨架、JWT+Security、角色/菜单/部门管理与权限
+ - DEV-08：考勤模块基础（签到/签退/请假）
+ - DEV-09：公告模块基础
  - DEV-10：审批中心骨架（模板/实例/记录）
- - DEV-11..DEV-14：RBAC 完善、dataScope 支持、菜单 perms 唯一性校验、菜单删除安全性
+ - DEV-11..DEV-14：RBAC 完善、dataScope、菜单安全增强
+ - DEV-15：日程管理 CRUD
+ - DEV-16：审批中心多级审批引擎完善
+ - DEV-17：报销管理 CRUD
+ - DEV-18：考勤统计增强（迟到/早退判定+月度报表）
+ - DEV-19：操作日志 AOP（@Log注解+切面）
+ - DEV-20：文件上传（通用+头像+静态资源映射）
+ - DEV-21：数据看板 API（概览/趋势/分布）
+
+Phase 1-4 全部完成，Phase 5（上线准备：MySQL/测试/Docker）待开始。
 
 说明与注意：
 - `doc/DESIGN.md` 是主设计与迭代记录文档，后续请以该文件为权威进度记录。README 只保留高层摘要与启动说明。
 - 你打算把 `DESIGN.md` 给其他智能体使用时，我会保持该文件为单一真实来源（同步更新实现/未实现项），并把 README 保持为简短引用。
 
-详细技术设计、接口说明和数据字典请在 `doc/` 目录下查看或告诉我需要把哪些条目同步进 README。
+详细技术设计、接口说明和数据字典请查看 `doc/DESIGN.md`。
 
-若你同意，我将把 `README.md` 清理为当前内容（已完成），并把变更提交到仓库。
+---
+
+## 下一步可开展工作
+
+| 优先级 | 方向 | 说明 |
+|--------|------|------|
+| 🔴 | Phase 5 - MySQL 切换 | 修改 application-dev.yml 数据源，导入 schema-mysql.sql |
+| 🔴 | Phase 5 - 单元测试 | JUnit 5 + Mockito，覆盖核心 Service |
+| 🟡 | 请假+审批集成 | 请假申请自动创建审批实例走多级审批流 |
+| 🟡 | 报销+审批集成 | 报销申请自动创建审批实例走多级审批流 |
+| 🟢 | Phase 5 - Docker 部署 | Dockerfile + docker-compose.yml |
+| 🟢 | 前端项目初始化 | Vue 3 + Element Plus，对接后端 API |
