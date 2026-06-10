@@ -66,8 +66,10 @@ secrets.properties
 # Ignore target-generated archives and classes
 /**/*.class
 
-# Node modules (in case frontend is in repo)
-/node_modules/
+# Frontend
+/frontend/node_modules/
+/frontend/dist/
+/frontend/.vite/
 
 # Docker
 docker-compose.override.yml

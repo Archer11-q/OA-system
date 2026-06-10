@@ -34,6 +34,7 @@
 >- DEV-25 (2026-06-10)：报销申请与审批中心集成：员工提交报销自动创建审批实例走多级审批流，审批完成后自动同步报销状态（复用 DEV-22 business_type/business_id 回调机制）；exp_request 表新增 approval_instance_id；预设报销审批模板（部门负责人→管理员 2级审批）。
 >- DEV-26 (2026-06-10)：审批撤回功能：申请人可撤回自己审批中的实例（POST /approval/{id}/cancel），撤回后同步更新关联业务记录状态；新增 3 个撤回测试用例，累计 22 测试全部通过。
 >- DEV-27 (2026-06-10)：Docker 部署：Dockerfile（多阶段构建：Maven 编译 + JRE 运行镜像）+ docker-compose.yml（MySQL 8.0 + OA 应用，健康检查+数据卷持久化），MySQL 初始化脚本自动导入。
+>- DEV-28 (2026-06-10)：前端项目初始化（Vue 3 + Vite + Element Plus + Vue Router + Pinia + Axios）：登录页（JWT 认证+路由守卫）、主布局（侧边栏菜单+折叠+头部导航+用户下拉）、数据看板（概览卡片+模块入口）、用户管理列表（分页查询+表格）；Axios 封装（Token 注入+401 拦截）；8 个业务模块路由/视图骨架已建立。
 
 
 ---
@@ -717,7 +718,7 @@ GET    /oa/dashboard/expense-distribution  ← 报销类型分布（饼图）
 - [x] 部门管理 CRUD + 部门树（DEV-07）
 - [x] 菜单管理 + 动态路由数据源（DEV-06 / DEV-13 / DEV-14）
 - [x] 用户-角色分配、角色-菜单分配（DEV-04）
-- [ ] 前端项目初始化（Vue 3 + Element Plus）对接接口
+- [x] 前端项目初始化（Vue 3 + Element Plus）对接接口（DEV-28）
 
 ### Phase 3：核心业务模块（优先级：中 🟡）
 
