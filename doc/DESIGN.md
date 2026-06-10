@@ -36,9 +36,7 @@
 >- HOTFIX (2026-06-10)：修复 DashboardController.java 第104行编译错误 — `Constants.APPROVAL_APPROVED`（int基本类型）无法作为 `.equals()` 的 receiver，改用 `e.getStatus() != null && e.getStatus() ==` 判空后比较。
 >- DEV-27 (2026-06-10)：Docker 部署：Dockerfile（多阶段构建：Maven 编译 + JRE 运行镜像）+ docker-compose.yml（MySQL 8.0 + OA 应用，健康检查+数据卷持久化），MySQL 初始化脚本自动导入。
 >- DEV-28 (2026-06-10)：前端项目初始化（Vue 3 + Vite + Element Plus + Vue Router + Pinia + Axios）：登录页（JWT 认证+路由守卫）、主布局（侧边栏菜单+折叠+头部导航+用户下拉）、数据看板（概览卡片+模块入口）、用户管理列表（分页查询+表格）；Axios 封装（Token 注入+401 拦截）；8 个业务模块路由/视图骨架已建立。
-
-
----
+>- DEV-29 (2026-06-10)：前端业务页面全面完善：新建 8 个 API 模块（role/menu/dept/attendance/approval/notice/schedule/expense）；完善 10 个业务页面——用户管理（CRUD 对话框+搜索+删除确认）、角色管理（CRUD+菜单权限分配树）、菜单管理（树形表格+类型联动表单）、部门管理（树形表格+级联选择）、公告通知（列表+发布/编辑+权限控制）、日程管理（日期范围筛选+CRUD）、报销管理（状态筛选+统计面板）、考勤管理（签到签退+月度统计+请假申请）、审批中心（多Tab：待审批/我的申请/已审批/模板管理+审批时间线）；数据看板集成 ECharts 图表（考勤趋势折线图+审批分布饼图+报销类型柱状图）。---
 
 ## 目录
 
