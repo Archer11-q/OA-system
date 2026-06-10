@@ -101,7 +101,7 @@ public class DashboardController {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         expense.put("totalAmount", totalAmount);
         expense.put("approvedAmount", monthExpenses.stream()
-                .filter(e -> Constants.APPROVAL_APPROVED.equals(e.getStatus()))
+                .filter(e -> e.getStatus() != null && e.getStatus() == Constants.APPROVAL_APPROVED)
                 .map(e -> e.getAmount() != null ? e.getAmount() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add));
         data.put("monthlyExpense", expense);
