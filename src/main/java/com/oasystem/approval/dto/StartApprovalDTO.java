@@ -20,4 +20,10 @@ public class StartApprovalDTO {
 
     /** 审批内容（JSON格式存储表单数据） */
     private String content;
+
+    /** 关联业务类型（LEAVE=请假，EXPENSE=报销），可选 */
+    private String businessType;
+
+    /** 关联业务ID，可选 */
+    private Long businessId;
 }

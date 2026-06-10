@@ -11,8 +11,12 @@ import com.oasystem.approval.mapper.ApprovalInstanceMapper;
 import com.oasystem.approval.mapper.ApprovalRecordMapper;
 import com.oasystem.approval.mapper.ApprovalTemplateMapper;
 import com.oasystem.approval.service.ApprovalService;
+import com.oasystem.attendance.entity.LeaveRequest;
+import com.oasystem.attendance.mapper.LeaveRequestMapper;
 import com.oasystem.common.constant.Constants;
 import com.oasystem.common.exception.BusinessException;
+import com.oasystem.expense.entity.ExpenseRequest;
+import com.oasystem.expense.mapper.ExpenseMapper;
 import com.oasystem.system.entity.Dept;
 import com.oasystem.system.entity.Role;
 import com.oasystem.system.entity.User;
@@ -45,6 +49,8 @@ public class ApprovalServiceImpl implements ApprovalService {
     private final DeptMapper deptMapper;
     private final RoleMapper roleMapper;
     private final UserRoleMapper userRoleMapper;
+    private final LeaveRequestMapper leaveRequestMapper;
+    private final ExpenseMapper expenseMapper;
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -90,6 +96,8 @@ public class ApprovalServiceImpl implements ApprovalService {
         instance.setTotalLevels(snapshots.size());
         instance.setCurrentLevel(1);
         instance.setStatus(Constants.APPROVAL_PENDING);
+        instance.setBusinessType(dto.getBusinessType());
+        instance.setBusinessId(dto.getBusinessId());
         try {
             instance.setApproversSnapshot(OBJECT_MAPPER.writeValueAsString(snapshots));
         } catch (Exception e) {
@@ -248,6 +256,8 @@ public class ApprovalServiceImpl implements ApprovalService {
             instance.setFinishTime(LocalDateTime.now());
             instanceMapper.updateById(instance);
             log.info("审批驳回, instanceId={}, approverId={}", instanceId, currentUserId);
+            // 回调更新关联业务记录状态
+            syncBusinessStatus(instance);
         } else {
             // 同意：检查是否还有下一级
             if (instance.getCurrentLevel() < instance.getTotalLevels()) {
@@ -261,6 +271,8 @@ public class ApprovalServiceImpl implements ApprovalService {
                 instance.setFinishTime(LocalDateTime.now());
                 instanceMapper.updateById(instance);
                 log.info("审批通过, instanceId={}", instanceId);
+                // 回调更新关联业务记录状态
+                syncBusinessStatus(instance);
             }
         }
     }
@@ -370,6 +382,44 @@ public class ApprovalServiceImpl implements ApprovalService {
             }
             default:
                 throw new BusinessException("第" + level + "级审批人类型不支持：" + type);
+        }
+    }
+
+    // ==================== 业务回调：审批完成后同步关联业务状态 ====================
+
+    /**
+     * 审批终态（通过/驳回）时，同步更新关联业务记录的状态
+     */
+    private void syncBusinessStatus(ApprovalInstance instance) {
+        String businessType = instance.getBusinessType();
+        Long businessId = instance.getBusinessId();
+        if (businessType == null || businessId == null) {
+            return;
+        }
+
+        switch (businessType) {
+            case Constants.BUSINESS_TYPE_LEAVE: {
+                LeaveRequest leave = leaveRequestMapper.selectById(businessId);
+                if (leave != null) {
+                    leave.setStatus(instance.getStatus());
+                    leave.setApprovalTime(instance.getFinishTime());
+                    leaveRequestMapper.updateById(leave);
+                    log.info("请假申请状态已同步, leaveId={}, status={}", businessId, instance.getStatus());
+                }
+                break;
+            }
+            case Constants.BUSINESS_TYPE_EXPENSE: {
+                ExpenseRequest expense = expenseMapper.selectById(businessId);
+                if (expense != null) {
+                    expense.setStatus(instance.getStatus());
+                    expense.setApprovalTime(instance.getFinishTime());
+                    expenseMapper.updateById(expense);
+                    log.info("报销申请状态已同步, expenseId={}, status={}", businessId, instance.getStatus());
+                }
+                break;
+            }
+            default:
+                log.debug("未知业务类型, businessType={}, 跳过状态同步", businessType);
         }
     }
 

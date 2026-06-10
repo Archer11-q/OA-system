@@ -123,23 +123,24 @@ CREATE TABLE IF NOT EXISTS att_record (
 
 -- 请假申请表
 CREATE TABLE IF NOT EXISTS att_leave_request (
-    id               BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id          BIGINT        NOT NULL    COMMENT '申请人ID',
-    leave_type       TINYINT       NOT NULL    COMMENT '请假类型(1年假 2事假 3病假 4调休)',
-    start_date       DATE          NOT NULL    COMMENT '开始日期',
-    end_date         DATE          NOT NULL    COMMENT '结束日期',
-    days             FLOAT         NOT NULL    COMMENT '请假天数',
-    reason           VARCHAR(512)  DEFAULT NULL COMMENT '请假原因',
-    status           TINYINT       DEFAULT 0   COMMENT '状态(0审批中 1已通过 2已驳回 3已撤回)',
-    approval_comment VARCHAR(256)  DEFAULT NULL COMMENT '审批意见',
-    approver_id      BIGINT        DEFAULT NULL COMMENT '审批人ID',
-    approval_time    DATETIME      DEFAULT NULL COMMENT '审批时间',
-    create_time      DATETIME      DEFAULT CURRENT_TIMESTAMP,
-    update_time      DATETIME      DEFAULT CURRENT_TIMESTAMP,
-    create_by        BIGINT        DEFAULT NULL,
-    update_by        BIGINT        DEFAULT NULL,
-    deleted          TINYINT       DEFAULT 0,
-    remark           VARCHAR(500)  DEFAULT NULL
+    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id             BIGINT        NOT NULL    COMMENT '申请人ID',
+    leave_type          TINYINT       NOT NULL    COMMENT '请假类型(1年假 2事假 3病假 4调休)',
+    start_date          DATE          NOT NULL    COMMENT '开始日期',
+    end_date            DATE          NOT NULL    COMMENT '结束日期',
+    days                FLOAT         NOT NULL    COMMENT '请假天数',
+    reason              VARCHAR(512)  DEFAULT NULL COMMENT '请假原因',
+    status              TINYINT       DEFAULT 0   COMMENT '状态(0审批中 1已通过 2已驳回 3已撤回)',
+    approval_comment    VARCHAR(256)  DEFAULT NULL COMMENT '审批意见',
+    approver_id         BIGINT        DEFAULT NULL COMMENT '审批人ID',
+    approval_time       DATETIME      DEFAULT NULL COMMENT '审批时间',
+    approval_instance_id BIGINT       DEFAULT NULL COMMENT '关联审批实例ID',
+    create_time         DATETIME      DEFAULT CURRENT_TIMESTAMP,
+    update_time         DATETIME      DEFAULT CURRENT_TIMESTAMP,
+    create_by           BIGINT        DEFAULT NULL,
+    update_by           BIGINT        DEFAULT NULL,
+    deleted             TINYINT       DEFAULT 0,
+    remark              VARCHAR(500)  DEFAULT NULL
 );
 
 -- ---------- 审批模块 ----------
@@ -163,22 +164,24 @@ CREATE TABLE IF NOT EXISTS appr_template (
 
 -- 审批实例表
 CREATE TABLE IF NOT EXISTS appr_instance (
-    id            BIGINT AUTO_INCREMENT PRIMARY KEY,
-    template_id   BIGINT        NOT NULL    COMMENT '审批模板ID',
-    applicant_id  BIGINT        NOT NULL    COMMENT '申请人ID',
-    title         VARCHAR(128)  NOT NULL    COMMENT '审批标题',
-    content       TEXT          DEFAULT NULL COMMENT '审批内容(JSON表单数据)',
-    total_levels  TINYINT       DEFAULT 1   COMMENT '总审批级数',
-    current_level TINYINT       DEFAULT 1   COMMENT '当前审批级别',
-    status        TINYINT       DEFAULT 0   COMMENT '状态(0审批中 1已通过 2已驳回 3已撤回)',
-    approvers_snapshot TEXT     DEFAULT NULL COMMENT '审批人快照(JSON)',
-    finish_time   DATETIME      DEFAULT NULL COMMENT '完成时间',
-    create_time   DATETIME      DEFAULT CURRENT_TIMESTAMP,
-    update_time   DATETIME      DEFAULT CURRENT_TIMESTAMP,
-    create_by     BIGINT        DEFAULT NULL,
-    update_by     BIGINT        DEFAULT NULL,
-    deleted       TINYINT       DEFAULT 0,
-    remark        VARCHAR(500)  DEFAULT NULL
+    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
+    template_id     BIGINT        NOT NULL    COMMENT '审批模板ID',
+    applicant_id    BIGINT        NOT NULL    COMMENT '申请人ID',
+    title           VARCHAR(128)  NOT NULL    COMMENT '审批标题',
+    content         TEXT          DEFAULT NULL COMMENT '审批内容(JSON表单数据)',
+    total_levels    TINYINT       DEFAULT 1   COMMENT '总审批级数',
+    current_level   TINYINT       DEFAULT 1   COMMENT '当前审批级别',
+    status          TINYINT       DEFAULT 0   COMMENT '状态(0审批中 1已通过 2已驳回 3已撤回)',
+    approvers_snapshot TEXT       DEFAULT NULL COMMENT '审批人快照(JSON)',
+    business_type   VARCHAR(32)   DEFAULT NULL COMMENT '关联业务类型(LEAVE=请假,EXPENSE=报销)',
+    business_id     BIGINT        DEFAULT NULL COMMENT '关联业务ID',
+    finish_time     DATETIME      DEFAULT NULL COMMENT '完成时间',
+    create_time     DATETIME      DEFAULT CURRENT_TIMESTAMP,
+    update_time     DATETIME      DEFAULT CURRENT_TIMESTAMP,
+    create_by       BIGINT        DEFAULT NULL,
+    update_by       BIGINT        DEFAULT NULL,
+    deleted         TINYINT       DEFAULT 0,
+    remark          VARCHAR(500)  DEFAULT NULL
 );
 
 -- 审批记录表（每一级的审批意见）

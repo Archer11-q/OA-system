@@ -54,3 +54,9 @@ INSERT INTO sys_user_role (user_id, role_id) VALUES
 -- ---------- 角色-菜单关联（admin拥有全部菜单） ----------
 INSERT INTO sys_role_menu (role_id, menu_id)
 SELECT 1, id FROM sys_menu;
+
+-- ---------- 审批模板 ----------
+-- 请假审批模板：2级审批 — 部门负责人 → 管理员
+INSERT INTO appr_template (id, template_name, template_code, description, approval_levels, status, approvers_config) VALUES
+(1, '请假审批', 'LEAVE_APPROVAL', '员工请假审批流程：部门负责人审批 → 管理员终审', 2, 1,
+ '[{"level":1,"type":"DEPT_LEADER"},{"level":2,"type":"ROLE","value":"ROLE_ADMIN"}]');

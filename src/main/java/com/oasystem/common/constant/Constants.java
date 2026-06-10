@@ -44,6 +44,12 @@ public final class Constants {
     /** 下班时间（小时） */
     public static final int WORK_END_HOUR = 18;
 
+    // ========== 业务类型（审批集成） ==========
+    /** 请假审批 */
+    public static final String BUSINESS_TYPE_LEAVE = "LEAVE";
+    /** 报销审批 */
+    public static final String BUSINESS_TYPE_EXPENSE = "EXPENSE";
+
     // ========== 请假类型 ==========
     /** 年假 */
     public static final int LEAVE_ANNUAL = 1;

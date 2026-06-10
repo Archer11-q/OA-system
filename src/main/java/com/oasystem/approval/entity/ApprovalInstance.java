@@ -39,6 +39,12 @@ public class ApprovalInstance extends BaseEntity {
     /** 审批人快照（JSON数组，启动时解析的审批人ID列表） */
     private String approversSnapshot;
 
+    /** 关联业务类型（LEAVE=请假，EXPENSE=报销） */
+    private String businessType;
+
+    /** 关联业务ID */
+    private Long businessId;
+
     /** 完成时间 */
     private LocalDateTime finishTime;
 }

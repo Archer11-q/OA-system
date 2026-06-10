@@ -141,23 +141,24 @@ CREATE TABLE att_record (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='考勤记录';
 
 CREATE TABLE att_leave_request (
-    id               BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id          BIGINT        NOT NULL,
-    leave_type       TINYINT       NOT NULL,
-    start_date       DATE          NOT NULL,
-    end_date         DATE          NOT NULL,
-    days             FLOAT         NOT NULL,
-    reason           VARCHAR(512)  DEFAULT NULL,
-    status           TINYINT       DEFAULT 0,
-    approval_comment VARCHAR(256)  DEFAULT NULL,
-    approver_id      BIGINT        DEFAULT NULL,
-    approval_time    DATETIME      DEFAULT NULL,
-    create_time      DATETIME      DEFAULT CURRENT_TIMESTAMP,
-    update_time      DATETIME      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    create_by        BIGINT        DEFAULT NULL,
-    update_by        BIGINT        DEFAULT NULL,
-    deleted          TINYINT       DEFAULT 0,
-    remark           VARCHAR(500)  DEFAULT NULL
+    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id             BIGINT        NOT NULL,
+    leave_type          TINYINT       NOT NULL,
+    start_date          DATE          NOT NULL,
+    end_date            DATE          NOT NULL,
+    days                FLOAT         NOT NULL,
+    reason              VARCHAR(512)  DEFAULT NULL,
+    status              TINYINT       DEFAULT 0,
+    approval_comment    VARCHAR(256)  DEFAULT NULL,
+    approver_id         BIGINT        DEFAULT NULL,
+    approval_time       DATETIME      DEFAULT NULL,
+    approval_instance_id BIGINT       DEFAULT NULL,
+    create_time         DATETIME      DEFAULT CURRENT_TIMESTAMP,
+    update_time         DATETIME      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    create_by           BIGINT        DEFAULT NULL,
+    update_by           BIGINT        DEFAULT NULL,
+    deleted             TINYINT       DEFAULT 0,
+    remark              VARCHAR(500)  DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='请假申请';
 
 -- ---------- 审批 ----------
@@ -178,22 +179,24 @@ CREATE TABLE appr_template (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='审批模板';
 
 CREATE TABLE appr_instance (
-    id            BIGINT AUTO_INCREMENT PRIMARY KEY,
-    template_id   BIGINT        NOT NULL,
-    applicant_id  BIGINT        NOT NULL,
-    title         VARCHAR(128)  NOT NULL,
-    content       TEXT          DEFAULT NULL,
-    total_levels  TINYINT       DEFAULT 1,
-    current_level TINYINT       DEFAULT 1,
-    status        TINYINT       DEFAULT 0,
-    approvers_snapshot TEXT     DEFAULT NULL COMMENT '审批人快照(JSON)',
-    finish_time   DATETIME      DEFAULT NULL,
-    create_time   DATETIME      DEFAULT CURRENT_TIMESTAMP,
-    update_time   DATETIME      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    create_by     BIGINT        DEFAULT NULL,
-    update_by     BIGINT        DEFAULT NULL,
-    deleted       TINYINT       DEFAULT 0,
-    remark        VARCHAR(500)  DEFAULT NULL
+    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
+    template_id     BIGINT        NOT NULL,
+    applicant_id    BIGINT        NOT NULL,
+    title           VARCHAR(128)  NOT NULL,
+    content         TEXT          DEFAULT NULL,
+    total_levels    TINYINT       DEFAULT 1,
+    current_level   TINYINT       DEFAULT 1,
+    status          TINYINT       DEFAULT 0,
+    approvers_snapshot TEXT       DEFAULT NULL COMMENT '审批人快照(JSON)',
+    business_type   VARCHAR(32)   DEFAULT NULL COMMENT '关联业务类型(LEAVE=请假,EXPENSE=报销)',
+    business_id     BIGINT        DEFAULT NULL COMMENT '关联业务ID',
+    finish_time     DATETIME      DEFAULT NULL,
+    create_time     DATETIME      DEFAULT CURRENT_TIMESTAMP,
+    update_time     DATETIME      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    create_by       BIGINT        DEFAULT NULL,
+    update_by       BIGINT        DEFAULT NULL,
+    deleted         TINYINT       DEFAULT 0,
+    remark          VARCHAR(500)  DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='审批实例';
 
 CREATE TABLE appr_record (
