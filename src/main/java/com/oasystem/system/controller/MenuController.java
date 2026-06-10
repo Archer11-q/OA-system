@@ -70,7 +70,7 @@ public class MenuController {
 
     @Operation(summary = "新增菜单")
     @PostMapping
-    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('system:menu:add')")
     public Result<Void> add(@RequestBody Menu menu) {
         if (menu == null) return Result.badRequest("参数为空");
         // perms 唯一性校验（若填写）
@@ -84,7 +84,7 @@ public class MenuController {
 
     @Operation(summary = "删除菜单")
     @DeleteMapping("/{id}")
-    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('system:menu:delete')")
     public Result<Void> delete(@PathVariable Long id) {
         if (id == null) return Result.badRequest("参数为空");
         // 若已有角色引用此菜单，禁止删除以避免权限丢失
@@ -99,7 +99,7 @@ public class MenuController {
 
     @Operation(summary = "更新菜单")
     @PutMapping
-    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('system:menu:edit')")
     public Result<Void> update(@RequestBody Menu menu) {
         if (menu == null || menu.getId() == null) return Result.badRequest("参数错误");
         // perms 唯一性校验（排除自身）
