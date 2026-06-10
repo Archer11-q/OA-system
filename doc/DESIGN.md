@@ -5,6 +5,14 @@
 > **技术栈**: Spring Boot 3.2 + MyBatis-Plus + MySQL/H2 + Spring Security + JWT  
 > **目标**: 完整的企业级 OA 系统，含 6 大模块，可作为课程设计/毕业设计交付
 
+> **迭代记录**：
+>
+>- DEV-01 (2026-06-10)：基础框架与 JWT 认证集成、用户管理 CRUD、H2 开发环境、API 文档（Knife4j）
+>- DEV-02 (2026-06-10)：添加 `.gitignore` 忽略本地构建与 IDE 文件，更新项目文档（README、DESIGN）
+- DEV-03 (2026-06-10)：添加根路径健康接口 `GET /`（HomeController），并在 `SecurityConfig` 中允许根路径无鉴权，方便访问应用根地址查看运行状态。
+- DEV-04 (2026-06-10)：实现角色管理基础 CRUD、菜单树接口、用户-角色分配（Role/RoleMenu/UserRole），并更新文档与 DB 脚本。
+
+
 ---
 
 ## 目录

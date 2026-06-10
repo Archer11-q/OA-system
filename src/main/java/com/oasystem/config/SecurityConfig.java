@@ -41,6 +41,9 @@ public class SecurityConfig {
                 // 放行所有请求（开发初期，后续收紧）
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                "/",
+                                "/index",
+                                "/index.html",
                                 "/auth/**",
                                 "/swagger-ui/**",
                                 "/swagger-resources/**",

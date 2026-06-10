@@ -43,6 +43,7 @@ D:\CLion\tools\apache-maven-3.9.16\bin\mvn spring-boot:run
 
 - DEV-02：实现 `UserDetailsService`，在 `JwtAuthenticationFilter` 中加载用户详细信息并填充权限（基于 `sys_user` / `sys_user_role` / `sys_role` / `sys_role_menu`）。
 - DEV-03：实现角色管理（CRUD）与菜单权限分配，完成 RBAC 的数据库端实现。
+ - DEV-04：已实现角色管理基础 CRUD、菜单树接口与用户-角色分配（覆盖式）。
 
 
 

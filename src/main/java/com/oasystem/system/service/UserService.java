@@ -46,4 +46,14 @@ public interface UserService extends IService<User> {
      * 获取当前登录用户信息
      */
     UserVO getCurrentUserInfo();
+
+    /**
+     * 查询用户已分配的角色
+     */
+    java.util.List<com.oasystem.system.entity.Role> getUserRoles(Long userId);
+
+    /**
+     * 为用户分配角色（覆盖式）
+     */
+    void assignRolesToUser(Long userId, java.util.List<Long> roleIds);
 }

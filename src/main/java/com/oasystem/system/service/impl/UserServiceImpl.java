@@ -36,6 +36,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final com.oasystem.system.mapper.UserRoleMapper userRoleMapper;
+    private final com.oasystem.system.mapper.RoleMapper roleMapper;
 
     @Override
     public Map<String, Object> login(LoginDTO loginDTO) {
@@ -133,6 +135,26 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException("用户不存在");
         }
         return toVO(user);
+    }
+
+    @Override
+    public java.util.List<com.oasystem.system.entity.Role> getUserRoles(Long userId) {
+        return roleMapper.selectRolesByUserId(userId);
+    }
+
+    @Override
+    @Transactional
+    public void assignRolesToUser(Long userId, java.util.List<Long> roleIds) {
+        // 覆盖式分配：先删除原有，再批量插入
+        userRoleMapper.delete(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.oasystem.system.entity.UserRole>()
+                .eq(com.oasystem.system.entity.UserRole::getUserId, userId));
+        if (roleIds == null || roleIds.isEmpty()) return;
+        for (Long rid : roleIds) {
+            com.oasystem.system.entity.UserRole ur = new com.oasystem.system.entity.UserRole();
+            ur.setUserId(userId);
+            ur.setRoleId(rid);
+            userRoleMapper.insert(ur);
+        }
     }
 
     /**
