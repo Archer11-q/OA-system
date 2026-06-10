@@ -87,10 +87,13 @@ public class MenuController {
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Result<Void> delete(@PathVariable Long id) {
         if (id == null) return Result.badRequest("参数为空");
+        // 若已有角色引用此菜单，禁止删除以避免权限丢失
+        long refCount = roleMenuMapper.selectCount(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.oasystem.system.entity.RoleMenu>().eq(com.oasystem.system.entity.RoleMenu::getMenuId, id));
+        if (refCount > 0) {
+            return Result.badRequest("该菜单已被角色引用，不能删除，请先从角色中移除引用");
+        }
         // 删除菜单
         menuMapper.deleteById(id);
-        // 清理 role-menu 关联
-        roleMenuMapper.delete(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.oasystem.system.entity.RoleMenu>().eq(com.oasystem.system.entity.RoleMenu::getMenuId, id));
         return Result.ok("删除成功", null);
     }
 
