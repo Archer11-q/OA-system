@@ -707,14 +707,14 @@ GET    /oa/dashboard/expense-distribution  ← 报销类型分布（饼图）
 - [x] 用户登录 + 用户管理 CRUD
 - [x] H2 内置数据库（开箱即用运行）
 
-### Phase 2：系统管理完善（✅ 已完成，除前端外）
+### Phase 2：系统管理完善（✅ 已完成）
 
 - [x] 完成 Spring Security + JWT 认证集成（DEV-05）
 - [x] 角色管理 CRUD + 菜单树（DEV-04 / DEV-11）
 - [x] 部门管理 CRUD + 部门树（DEV-07）
 - [x] 菜单管理 + 动态路由数据源（DEV-06 / DEV-13 / DEV-14）
 - [x] 用户-角色分配、角色-菜单分配（DEV-04）
-- [x] 前端项目初始化（Vue 3 + Element Plus）对接接口（DEV-28）
+- [x] 前端项目初始化（Vue 3 + Element Plus）+ 业务页面完善（DEV-28 / DEV-29）
 
 ### Phase 3：核心业务模块（优先级：中 🟡）
 
