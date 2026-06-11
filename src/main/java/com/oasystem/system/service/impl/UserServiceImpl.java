@@ -165,18 +165,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         UserVO vo = toVO(user);
 
         // 填充角色信息（供前端 store 使用）
-        java.util.List<com.oasystem.system.entity.Role> roles = getUserRoles(userId);
-        if (roles != null && !roles.isEmpty()) {
-            java.util.List<String> roleCodes = roles.stream()
-                    .map(com.oasystem.system.entity.Role::getRoleCode)
-                    .filter(r -> r != null)
-                    .collect(java.util.stream.Collectors.toList());
-            java.util.List<String> roleNames = roles.stream()
-                    .map(com.oasystem.system.entity.Role::getRoleName)
-                    .filter(r -> r != null)
-                    .collect(java.util.stream.Collectors.toList());
-            vo.setRoleNames(roleNames);
-            vo.setRoles(roleCodes);
+        try {
+            java.util.List<com.oasystem.system.entity.Role> roles = getUserRoles(userId);
+            if (roles != null && !roles.isEmpty()) {
+                java.util.List<String> roleCodes = roles.stream()
+                        .map(com.oasystem.system.entity.Role::getRoleCode)
+                        .filter(r -> r != null)
+                        .collect(java.util.stream.Collectors.toList());
+                java.util.List<String> roleNames = roles.stream()
+                        .map(com.oasystem.system.entity.Role::getRoleName)
+                        .filter(r -> r != null)
+                        .collect(java.util.stream.Collectors.toList());
+                vo.setRoleNames(roleNames);
+                vo.setRoles(roleCodes);
+            }
+        } catch (Exception e) {
+            log.warn("填充角色信息失败: userId={}, error={}", userId, e.getMessage());
         }
 
         return vo;
@@ -184,7 +188,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public java.util.List<com.oasystem.system.entity.Role> getUserRoles(Long userId) {
-        return roleMapper.selectRolesByUserId(userId);
+        try {
+            return roleMapper.selectRolesByUserId(userId);
+        } catch (Exception e) {
+            log.warn("查询用户角色失败: userId={}, error={}", userId, e.getMessage());
+            return java.util.Collections.emptyList();
+        }
     }
 
     @Override

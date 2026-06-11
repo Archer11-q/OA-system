@@ -36,7 +36,11 @@
 >- HOTFIX (2026-06-10)：修复 DashboardController.java 第104行编译错误 — `Constants.APPROVAL_APPROVED`（int基本类型）无法作为 `.equals()` 的 receiver，改用 `e.getStatus() != null && e.getStatus() ==` 判空后比较。
 >- DEV-27 (2026-06-10)：Docker 部署：Dockerfile（多阶段构建：Maven 编译 + JRE 运行镜像）+ docker-compose.yml（MySQL 8.0 + OA 应用，健康检查+数据卷持久化），MySQL 初始化脚本自动导入。
 >- DEV-28 (2026-06-10)：前端项目初始化（Vue 3 + Vite + Element Plus + Vue Router + Pinia + Axios）：登录页（JWT 认证+路由守卫）、主布局（侧边栏菜单+折叠+头部导航+用户下拉）、数据看板（概览卡片+模块入口）、用户管理列表（分页查询+表格）；Axios 封装（Token 注入+401 拦截）；8 个业务模块路由/视图骨架已建立。
->- DEV-29 (2026-06-10)：前端业务页面全面完善：新建 8 个 API 模块（role/menu/dept/attendance/approval/notice/schedule/expense）；完善 10 个业务页面——用户管理（CRUD 对话框+搜索+删除确认）、角色管理（CRUD+菜单权限分配树）、菜单管理（树形表格+类型联动表单）、部门管理（树形表格+级联选择）、公告通知（列表+发布/编辑+权限控制）、日程管理（日期范围筛选+CRUD）、报销管理（状态筛选+统计面板）、考勤管理（签到签退+月度统计+请假申请）、审批中心（多Tab：待审批/我的申请/已审批/模板管理+审批时间线）；数据看板集成 ECharts 图表（考勤趋势折线图+审批分布饼图+报销类型柱状图）。---
+>- DEV-29 (2026-06-10)：前端业务页面全面完善：新建 8 个 API 模块（role/menu/dept/attendance/approval/notice/schedule/expense）；完善 10 个业务页面——用户管理（CRUD 对话框+搜索+删除确认）、角色管理（CRUD+菜单权限分配树）、菜单管理（树形表格+类型联动表单）、部门管理（树形表格+级联选择）、公告通知（列表+发布/编辑+权限控制）、日程管理（日期范围筛选+CRUD）、报销管理（状态筛选+统计面板）、考勤管理（签到签退+月度统计+请假申请）、审批中心（多Tab：待审批/我的申请/已审批/模板管理+审批时间线）；数据看板集成 ECharts 图表（考勤趋势折线图+审批分布饼图+报销类型柱状图）。
+>- HOTFIX (2026-06-11)：修复认证流程四大连锁问题 — 1) 创建缺失的 MyBatis XML 映射文件（RoleMapper.xml / MenuMapper.xml / AttendanceMapper.xml），`selectRolesByUserId` 和 `selectMenusByUserId` 方法只有接口声明无 SQL 实现，导致 `getCurrentUserInfo()` 抛出 BindingException → 500；2) 修正 SecurityConfig 开启 JWT 认证拦截（之前所有路径 permitAll），配置 401/403 统一 JSON 响应；3) 前端路由守卫改为解析 JWT exp 判定过期（之前仅检查 token 字符串存在导致跳过登录页）；4) 登录 store 中 getUserInfo() 失败时回滚清除 token 防止"半登录"状态。
+>- HOTFIX (2026-06-11)：修复 Dashboard/Approval/Expense 模块 500 错误 — 根因是 H2 数据库文件（data/oa-system.mv.db）使用旧版 schema-h2.sql 创建，`CREATE TABLE IF NOT EXISTS` 不会更新已存在的表结构，导致 `appr_instance` 等表的列名与实体映射不一致（Column "APPROVERS_SNAPSHOT" not found）。解决：删除 H2 数据文件重新初始化。⚠️ 注意：修改 schema-h2.sql 后需手动删除 H2 DB 文件。
+>- HOTFIX (2026-06-11)：增强错误处理 — `UserServiceImpl.getUserRoles()` / `getCurrentUserInfo()` 增加 try-catch 降级保护；前端 Axios 错误处理增加从响应体提取后端错误消息；前端 Dashboard 兼容嵌套/扁平两种响应结构。
+---
 
 ## 目录
 
@@ -279,7 +283,10 @@ oa-system/
     │       │   ├── schema-h2.sql             # H2 建表脚本
     │       │   └── data.sql                  # 初始数据（admin + 菜单 + 审批模板）
     │       └── mapper/
-    │           └── UserMapper.xml            # MyBatis XML（复杂查询）
+    │           └── UserMapper.xml            # MyBatis XML（用户复杂查询）
+    │           ├── RoleMapper.xml            # 角色-用户联查
+    │           ├── MenuMapper.xml            # 菜单-角色-用户联查
+    │           └── AttendanceMapper.xml      # 考勤按月查询
     │
     └── test/
         └── java/com/oasystem/
@@ -677,10 +684,13 @@ GET    /oa/dashboard/expense-distribution  ← 报销类型分布（饼图）
 
 ### 7.5 当前安全状态
 
-- ✅ **已集成 JWT 认证与权限注入（本次 DEV-05 完成）**：
-  - `JwtAuthenticationFilter` 解析 Token 并尝试加载用户权限（通过 `UserDetailsService` / `JwtUserDetails`），将认证信息写入 `SecurityContext`；
-  - `SecurityUtils` 已增强用于获取当前用户与权限的便捷方法；
-  - 为便于开发，根路径与文档相关路径仍保留放行策略，后续迭代将逐步打开更严格的接口鉴权规则（方法级 `@PreAuthorize` 等）。
+- ✅ **JWT 认证已全面启用**（2026-06-11 修复）：
+  - `SecurityConfig` 配置：除 `/auth/**`（登录）、Swagger/H2 控制台外，所有请求需要认证；
+  - 未认证请求返回 401 JSON（`authenticationEntryPoint`），权限不足返回 403 JSON（`accessDeniedHandler`）；
+  - `JwtAuthenticationFilter` 解析 Token → `UserDetailsServiceImpl` 加载角色+菜单权限 → 填充 `SecurityContext`；
+  - 接口级权限通过 `@PreAuthorize` 注解控制（如 `ROLE_ADMIN` 才可管理模板/日志/部门/角色等）；
+  - `SecurityUtils` 提供 `getCurrentUserId()` / `getCurrentUsername()` / `hasPermission()` 便捷方法；
+  - 前端路由守卫解析 JWT `exp` 判定过期，Axios 拦截器统一处理 401 跳转登录页。
 
 ---
 
@@ -873,6 +883,13 @@ java -jar target/oa-system.jar --spring.profiles.active=prod
 
 **Q: 启动报 "Table not found"？**
 A: 检查 `application-dev.yml` 中 `spring.sql.init.mode` 是否为 `always`，确保启动时自动执行建表脚本。
+
+**Q: 修改了 schema-h2.sql 但表结构没变化 / 出现 "Column not found" 错误？**
+A: `CREATE TABLE IF NOT EXISTS` 不会更新已存在的表。需要删除 H2 数据库文件后重启：
+```powershell
+Remove-Item D:\CLion\oa-system\data\oa-system.mv.db
+```
+重启 Spring Boot 后会自动重建数据库。
 
 **Q: 如何查看 H2 数据库内容？**
 A: 启动后访问 `http://localhost:8080/oa/h2-console`，JDBC URL 填 `jdbc:h2:file:./data/oa-system`

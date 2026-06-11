@@ -98,10 +98,11 @@ async function loadOverview() {
   try {
     const res = await getOverview()
     if (res.data) {
-      overviewCards.value[0].value = res.data.userCount ?? '--'
-      overviewCards.value[1].value = res.data.deptCount ?? '--'
-      overviewCards.value[2].value = res.data.roleCount ?? '--'
-      overviewCards.value[3].value = res.data.noticeCount ?? '--'
+      const sys = res.data.system || res.data
+      overviewCards.value[0].value = sys.userCount ?? '--'
+      overviewCards.value[1].value = sys.deptCount ?? '--'
+      overviewCards.value[2].value = sys.roleCount ?? '--'
+      overviewCards.value[3].value = sys.noticeCount ?? '--'
     }
   } catch { /* 使用默认值 */ }
 }

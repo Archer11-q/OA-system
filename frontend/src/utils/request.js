@@ -41,11 +41,15 @@ request.interceptors.response.use(
     return Promise.reject(new Error(res.message || '请求失败'))
   },
   error => {
-    if (error.response?.status === 401) {
+    // 尝试从响应体中提取后端返回的错误信息
+    const serverMsg = error.response?.data?.message
+    if (error.response?.status === 401 || error.response?.data?.code === 401) {
       localStorage.removeItem('token')
       router.push('/login')
+      ElMessage.error(serverMsg || '登录已过期，请重新登录')
+    } else {
+      ElMessage.error(serverMsg || error.message || '网络错误')
     }
-    ElMessage.error(error.message || '网络错误')
     return Promise.reject(error)
   }
 )

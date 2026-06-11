@@ -105,19 +105,51 @@ const router = createRouter({
   routes
 })
 
+/**
+ * 解析 JWT Token 获取过期时间
+ * @returns {number|null} 过期时间戳（秒），解析失败返回 null
+ */
+function getTokenExpiration(token) {
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) return null
+    const payload = JSON.parse(atob(parts[1]))
+    return payload.exp || null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * 检查 token 是否有效
+ */
+function isTokenValid(token) {
+  if (!token) return false
+  const exp = getTokenExpiration(token)
+  if (!exp) return false
+  // 提前30秒判定过期，避免临界情况
+  return exp * 1000 > Date.now() + 30000
+}
+
 // 路由守卫 — 未登录跳转登录页
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
+  const valid = isTokenValid(token)
+
   if (to.path === '/login') {
-    if (token) {
+    if (valid) {
       next('/dashboard')
     } else {
+      // 清理残留的过期 token
+      if (token) localStorage.removeItem('token')
       next()
     }
     return
   }
-  if (!token) {
-    ElMessage.warning('请先登录')
+
+  if (!valid) {
+    localStorage.removeItem('token')
+    ElMessage.warning('登录已过期，请重新登录')
     next('/login')
     return
   }

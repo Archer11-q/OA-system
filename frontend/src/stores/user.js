@@ -13,8 +13,15 @@ export const useUserStore = defineStore('user', () => {
     const res = await loginApi({ username, password })
     token.value = res.data.token
     localStorage.setItem('token', res.data.token)
-    // 获取用户信息
-    await getUserInfo()
+    // 获取用户信息（失败时清理 token，避免半登录状态）
+    try {
+      await getUserInfo()
+    } catch (e) {
+      // 回滚：清除已保存的 token
+      token.value = ''
+      localStorage.removeItem('token')
+      throw e
+    }
     return res
   }
 
