@@ -39,4 +39,9 @@ public interface ScheduleService {
      * 删除日程（仅创建人可删除）
      */
     void deleteSchedule(Long id, Long userId);
+
+    /**
+     * 获取用户即将到来的日程提醒（未来24小时内、未发送提醒的日程）
+     */
+    List<Schedule> getUpcomingReminders(Long userId);
 }

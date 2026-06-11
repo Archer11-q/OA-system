@@ -6,6 +6,7 @@ import com.oasystem.system.dto.LoginDTO;
 import com.oasystem.system.service.UserService;
 import com.oasystem.system.vo.UserVO;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,8 @@ public class AuthController {
     @Log(module = "认证管理", value = "用户登录")
     @Operation(summary = "用户登录")
     @PostMapping("/login")
-    public Result<Map<String, Object>> login(@Valid @RequestBody LoginDTO loginDTO) {
+    public Result<Map<String, Object>> login(
+            @Parameter(description = "登录凭证（用户名+密码）", required = true) @Valid @RequestBody LoginDTO loginDTO) {
         Map<String, Object> result = userService.login(loginDTO);
         return Result.ok("登录成功", result);
     }

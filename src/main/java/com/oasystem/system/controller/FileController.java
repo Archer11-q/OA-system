@@ -2,6 +2,7 @@ package com.oasystem.system.controller;
 
 import com.oasystem.common.Result;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,7 +39,7 @@ public class FileController {
 
     @Operation(summary = "通用文件上传")
     @PostMapping("/upload")
-    public Result<Map<String, String>> upload(@RequestParam("file") MultipartFile file) {
+    public Result<Map<String, String>> upload(@Parameter(description = "上传文件", required = true) @RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return Result.badRequest("文件不能为空");
         }
@@ -70,7 +71,7 @@ public class FileController {
 
     @Operation(summary = "头像上传（仅限图片）")
     @PostMapping("/upload/avatar")
-    public Result<Map<String, String>> uploadAvatar(@RequestParam("file") MultipartFile file) {
+    public Result<Map<String, String>> uploadAvatar(@Parameter(description = "头像图片文件（仅限jpg/png/gif等）", required = true) @RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return Result.badRequest("文件不能为空");
         }

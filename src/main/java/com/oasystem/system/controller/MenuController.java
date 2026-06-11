@@ -2,6 +2,7 @@ package com.oasystem.system.controller;
 
 import com.oasystem.common.Result;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -30,7 +31,8 @@ public class MenuController {
 
     @Operation(summary = "查询菜单树")
     @GetMapping("/tree")
-    public Result<List<MenuTreeVO>> tree(@RequestParam(value = "all", required = false, defaultValue = "false") boolean all) {
+    public Result<List<MenuTreeVO>> tree(@Parameter(description = "是否查询全部菜单（管理员用），默认false仅查用户权限内的菜单")
+                                         @RequestParam(value = "all", required = false, defaultValue = "false") boolean all) {
         Long userId = securityUtils.getCurrentUserId();
         List<MenuTreeVO> roots = menuService.tree(all, userId);
         return Result.ok(roots);
@@ -39,7 +41,7 @@ public class MenuController {
     @Operation(summary = "新增菜单")
     @PostMapping
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('system:menu:add')")
-    public Result<Void> add(@RequestBody Menu menu) {
+    public Result<Void> add(@Parameter(description = "菜单信息（含名称、路径、权限标识等）", required = true) @RequestBody Menu menu) {
         if (menu == null) return Result.badRequest("参数为空");
         try {
             menuService.add(menu);
@@ -54,7 +56,7 @@ public class MenuController {
     @Operation(summary = "删除菜单")
     @DeleteMapping("/{id}")
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('system:menu:delete')")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@Parameter(description = "菜单ID", required = true) @PathVariable Long id) {
         if (id == null) return Result.badRequest("参数为空");
         try {
             menuService.delete(id);
@@ -69,7 +71,7 @@ public class MenuController {
     @Operation(summary = "更新菜单")
     @PutMapping
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('system:menu:edit')")
-    public Result<Void> update(@RequestBody Menu menu) {
+    public Result<Void> update(@Parameter(description = "菜单信息（含ID和要更新的字段）", required = true) @RequestBody Menu menu) {
         if (menu == null || menu.getId() == null) return Result.badRequest("参数错误");
         try {
             menuService.update(menu);

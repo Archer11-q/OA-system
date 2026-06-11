@@ -5,6 +5,7 @@ import com.oasystem.common.Result;
 import com.oasystem.log.entity.OperLog;
 import com.oasystem.log.service.OperLogService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,23 +26,23 @@ public class OperLogController {
     @Operation(summary = "操作日志列表（分页）")
     @GetMapping("/page")
     public Result<PageResult<OperLog>> page(
-            @RequestParam(defaultValue = "1") int pageNum,
-            @RequestParam(defaultValue = "20") int pageSize,
-            @RequestParam(required = false) String username,
-            @RequestParam(required = false) String module,
-            @RequestParam(required = false) Integer status) {
+            @Parameter(description = "页码", required = true) @RequestParam(defaultValue = "1") int pageNum,
+            @Parameter(description = "每页条数") @RequestParam(defaultValue = "20") int pageSize,
+            @Parameter(description = "操作用户名（模糊过滤）") @RequestParam(required = false) String username,
+            @Parameter(description = "操作模块（精确过滤）") @RequestParam(required = false) String module,
+            @Parameter(description = "操作状态（1=成功，0=失败）") @RequestParam(required = false) Integer status) {
         return Result.ok(operLogService.page(pageNum, pageSize, username, module, status));
     }
 
     @Operation(summary = "日志详情")
     @GetMapping("/{id}")
-    public Result<OperLog> getById(@PathVariable Long id) {
+    public Result<OperLog> getById(@Parameter(description = "日志ID", required = true) @PathVariable Long id) {
         return Result.ok(operLogService.getById(id));
     }
 
     @Operation(summary = "清理旧日志（管理员）")
     @DeleteMapping("/clean")
-    public Result<Integer> clean(@RequestParam(defaultValue = "90") int days) {
+    public Result<Integer> clean(@Parameter(description = "保留天数，默认90天") @RequestParam(defaultValue = "90") int days) {
         int count = operLogService.cleanOldLogs(days);
         return Result.ok("清理了 " + count + " 条日志", count);
     }

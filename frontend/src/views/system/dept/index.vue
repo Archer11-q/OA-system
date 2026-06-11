@@ -19,6 +19,18 @@
       >
         <el-table-column prop="id" label="ID" width="60" />
         <el-table-column prop="deptName" label="部门名称" />
+        <el-table-column label="本部门人数" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag size="small" type="info">{{ row._directCount ?? 0 }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="总人数（含下级）" width="130" align="center">
+          <template #default="{ row }">
+            <el-tag size="small" :type="(row._totalCount ?? 0) > 0 ? 'primary' : 'info'">
+              {{ row._totalCount ?? 0 }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="sort" label="排序" width="60" />
         <el-table-column label="状态" width="80">
           <template #default="{ row }">
@@ -75,7 +87,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { getDeptTree, addDept, updateDept, deleteDept } from '@/api/dept'
+import { getDeptTree, addDept, updateDept, deleteDept, getDeptUserStats } from '@/api/dept'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const loading = ref(false)
@@ -107,11 +119,40 @@ const deptTreeSelectData = computed(() => {
   return [{ id: 0, deptName: '顶级部门', children: tableData.value }]
 })
 
+// 递归合并用户统计到树节点
+function mergeUserStats(tree, statsMap) {
+  for (const node of tree) {
+    const stat = statsMap[node.id]
+    if (stat) {
+      node._directCount = stat.directCount
+      node._totalCount = stat.totalCount
+    }
+    if (node.children && node.children.length > 0) {
+      mergeUserStats(node.children, statsMap)
+    }
+  }
+}
+
 async function fetchData() {
   loading.value = true
   try {
-    const res = await getDeptTree()
-    tableData.value = res.data || []
+    const [treeRes, statsRes] = await Promise.all([
+      getDeptTree(),
+      getDeptUserStats()
+    ])
+    const tree = treeRes.data || []
+    const stats = statsRes.data || []
+
+    // 构建 deptId -> stat 映射
+    const statsMap = {}
+    for (const s of stats) {
+      statsMap[s.deptId] = s
+    }
+
+    // 合并到树节点
+    mergeUserStats(tree, statsMap)
+
+    tableData.value = tree
   } finally {
     loading.value = false
   }

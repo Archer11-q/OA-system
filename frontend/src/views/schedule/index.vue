@@ -109,6 +109,22 @@
             style="width: 100%"
           />
         </el-form-item>
+        <el-form-item label="可见性">
+          <el-select v-model="formData.visibility" placeholder="请选择可见范围" style="width: 100%">
+            <el-option label="仅自己" :value="1">
+              <el-icon><Lock /></el-icon>
+              <span>仅自己</span>
+            </el-option>
+            <el-option label="本部门" :value="2">
+              <el-icon><OfficeBuilding /></el-icon>
+              <span>本部门</span>
+            </el-option>
+            <el-option label="公开" :value="3">
+              <el-icon><View /></el-icon>
+              <span>公开</span>
+            </el-option>
+          </el-select>
+        </el-form-item>
         <el-form-item label="类型">
           <el-select v-model="formData.scheduleType" placeholder="请选择类型" style="width: 100%">
             <el-option label="个人" :value="1" />
@@ -125,6 +141,17 @@
         </el-form-item>
         <el-form-item label="地点">
           <el-input v-model="formData.location" placeholder="请输入地点" />
+        </el-form-item>
+        <el-form-item label="提醒">
+          <el-select v-model="formData.reminderMinutes" placeholder="选择提醒时间" clearable style="width: 100%">
+            <el-option label="不提醒" :value="null" />
+            <el-option label="提前5分钟" :value="5" />
+            <el-option label="提前15分钟" :value="15" />
+            <el-option label="提前30分钟" :value="30" />
+            <el-option label="提前1小时" :value="60" />
+            <el-option label="提前2小时" :value="120" />
+            <el-option label="提前1天" :value="1440" />
+          </el-select>
         </el-form-item>
         <el-form-item label="描述">
           <el-input v-model="formData.content" type="textarea" :rows="3" placeholder="请输入日程描述" />
@@ -177,11 +204,13 @@ const defaultForm = () => ({
   title: '',
   startTime: '',
   endTime: '',
+  visibility: 1,
   scheduleType: 1,
   priority: 1,
   location: '',
   content: '',
-  status: 0
+  status: 0,
+  reminderMinutes: null
 })
 
 const formData = reactive(defaultForm())
@@ -358,11 +387,13 @@ function handleEdit(row) {
     title: row.title || '',
     startTime: row.startTime || '',
     endTime: row.endTime || '',
+    visibility: row.visibility ?? 1,
     scheduleType: row.scheduleType ?? 1,
     priority: row.priority ?? 1,
     location: row.location || '',
     content: row.content || '',
-    status: row.status ?? 0
+    status: row.status ?? 0,
+    reminderMinutes: row.reminderMinutes ?? null
   })
   dialogVisible.value = true
 }

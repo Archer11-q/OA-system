@@ -2,6 +2,7 @@ package com.oasystem.system.controller;
 
 import com.oasystem.common.Result;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -43,7 +44,7 @@ public class RoleController {
 
     @Operation(summary = "根据ID获取角色详情")
     @GetMapping("/{id}")
-    public Result<RoleVO> getById(@PathVariable Long id) {
+    public Result<RoleVO> getById(@Parameter(description = "角色ID", required = true) @PathVariable Long id) {
         Role r = roleService.getByIdWithCheck(id);
         if (r == null) return Result.notFound("角色不存在");
         RoleVO vo = new RoleVO();
@@ -54,7 +55,7 @@ public class RoleController {
     @Operation(summary = "新增角色")
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public Result<Void> add(@Valid @RequestBody RoleDTO dto) {
+    public Result<Void> add(@Parameter(description = "角色信息（名称+编码+数据范围）", required = true) @Valid @RequestBody RoleDTO dto) {
         Role role = new Role();
         BeanUtils.copyProperties(dto, role);
         roleService.createRole(role);
@@ -64,7 +65,7 @@ public class RoleController {
     @Operation(summary = "更新角色")
     @PutMapping
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public Result<Void> update(@Valid @RequestBody RoleDTO dto) {
+    public Result<Void> update(@Parameter(description = "角色信息（含ID和要更新的字段）", required = true) @Valid @RequestBody RoleDTO dto) {
         Role role = new Role();
         BeanUtils.copyProperties(dto, role);
         roleService.updateRole(role);
@@ -74,7 +75,7 @@ public class RoleController {
     @Operation(summary = "删除角色")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@Parameter(description = "角色ID", required = true) @PathVariable Long id) {
         roleService.deleteRole(id);
         return Result.ok("删除成功", null);
     }
@@ -82,7 +83,8 @@ public class RoleController {
     @Operation(summary = "为角色分配菜单权限（覆盖）")
     @PutMapping("/{id}/menus")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public Result<Void> assignMenus(@PathVariable("id") Long id, @RequestBody java.util.Map<String, java.util.List<Long>> body) {
+    public Result<Void> assignMenus(@Parameter(description = "角色ID", required = true) @PathVariable("id") Long id,
+                                     @Parameter(description = "菜单ID列表 {\"menuIds\": [1,2,3]}") @RequestBody java.util.Map<String, java.util.List<Long>> body) {
         java.util.List<Long> menuIds = body.getOrDefault("menuIds", java.util.Collections.emptyList());
         roleService.assignMenus(id, menuIds);
         return Result.ok("分配成功", null);

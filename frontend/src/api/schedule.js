@@ -24,3 +24,8 @@ export function updateSchedule(data) {
 export function deleteSchedule(id) {
   return request({ url: `/oa/schedule/${id}`, method: 'delete' })
 }
+
+// 获取即将到来的日程提醒
+export function getScheduleReminders() {
+  return request({ url: '/oa/schedule/reminders', method: 'get' })
+}

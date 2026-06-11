@@ -82,12 +82,20 @@
           <el-tag size="small" :type="statusTag(viewData.status)">{{ statusLabel(viewData.status) }}</el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="描述" :span="2">{{ viewData.description || '无' }}</el-descriptions-item>
+        <el-descriptions-item label="附件" :span="2">
+          <template v-if="viewAttachments.length > 0">
+            <div v-for="(att, idx) in viewAttachments" :key="idx">
+              <el-link type="primary" :href="att.url" target="_blank">{{ att.name }}</el-link>
+            </div>
+          </template>
+          <span v-else>无附件</span>
+        </el-descriptions-item>
         <el-descriptions-item label="申请时间" :span="2">{{ viewData.createTime }}</el-descriptions-item>
       </el-descriptions>
     </el-dialog>
 
     <!-- 新增/编辑对话框 -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px" @close="handleDialogClose">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="560px" @close="handleDialogClose">
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="80px">
         <el-form-item label="标题" prop="title">
           <el-input v-model="formData.title" placeholder="请输入报销标题" />
@@ -107,6 +115,27 @@
         <el-form-item label="描述">
           <el-input v-model="formData.description" type="textarea" :rows="3" placeholder="请输入报销描述" />
         </el-form-item>
+        <!-- 附件上传 -->
+        <el-form-item label="附件">
+          <div class="attachment-area">
+            <el-upload
+              :auto-upload="true"
+              :show-file-list="false"
+              :before-upload="beforeAttachmentUpload"
+              :http-request="handleAttachmentUpload"
+              accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
+            >
+              <el-button type="primary" plain icon="Upload" :loading="uploading">上传附件</el-button>
+            </el-upload>
+            <div v-if="attachments.length > 0" class="attachment-list">
+              <div v-for="(att, idx) in attachments" :key="idx" class="attachment-item">
+                <el-icon><Document /></el-icon>
+                <a :href="att.url" target="_blank" class="attachment-name">{{ att.name }}</a>
+                <el-button type="danger" size="small" link icon="Delete" @click="removeAttachment(idx)" />
+              </div>
+            </div>
+          </div>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -119,6 +148,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { getExpenseList, getExpenseById, addExpense, updateExpense, deleteExpense, getExpenseStats } from '@/api/expense'
+import { uploadFile } from '@/api/file'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const loading = ref(false)
@@ -144,6 +174,10 @@ const dialogTitle = ref('')
 const isEdit = ref(false)
 const submitLoading = ref(false)
 const formRef = ref(null)
+
+// 附件管理
+const uploading = ref(false)
+const attachments = ref([])
 
 const defaultForm = () => ({
   title: '',
@@ -178,6 +212,48 @@ function statusTag(s) {
 function statusLabel(s) {
   const map = { 0: '审批中', 1: '已通过', 2: '已驳回', 3: '已撤回' }
   return map[s] || '未知'
+}
+
+// 附件上传前校验
+function beforeAttachmentUpload(file) {
+  const maxSize = 10 * 1024 * 1024 // 10MB
+  if (file.size > maxSize) {
+    ElMessage.error('附件大小不能超过 10MB')
+    return false
+  }
+  return true
+}
+
+// 执行附件上传
+async function handleAttachmentUpload(options) {
+  uploading.value = true
+  try {
+    const res = await uploadFile(options.file)
+    attachments.value.push({
+      name: res.data.originalName,
+      url: res.data.url
+    })
+    ElMessage.success('附件上传成功')
+  } catch (e) {
+    ElMessage.error(e.message || '附件上传失败')
+  } finally {
+    uploading.value = false
+  }
+}
+
+// 移除附件
+function removeAttachment(idx) {
+  attachments.value.splice(idx, 1)
+}
+
+// 解析已有附件（编辑时）
+function parseAttachments(attachmentsJson) {
+  try {
+    if (attachmentsJson) {
+      return JSON.parse(attachmentsJson)
+    }
+  } catch { /* ignore parse error */ }
+  return []
 }
 
 async function fetchData() {
@@ -218,13 +294,17 @@ function handleReset() {
 
 function handleView(row) {
   Object.assign(viewData, row)
+  viewAttachments.value = parseAttachments(row.attachments)
   viewVisible.value = true
 }
+
+const viewAttachments = ref([])
 
 function handleAdd() {
   dialogTitle.value = '新增报销'
   isEdit.value = false
   Object.assign(formData, defaultForm())
+  attachments.value = []
   dialogVisible.value = true
 }
 
@@ -238,11 +318,13 @@ function handleEdit(row) {
     amount: row.amount,
     description: row.description || ''
   })
+  attachments.value = parseAttachments(row.attachments)
   dialogVisible.value = true
 }
 
 function handleDialogClose() {
   formRef.value?.resetFields()
+  attachments.value = []
 }
 
 async function handleSubmit() {
@@ -250,11 +332,15 @@ async function handleSubmit() {
   if (!valid) return
   submitLoading.value = true
   try {
+    const payload = {
+      ...formData,
+      attachments: attachments.value.length > 0 ? JSON.stringify(attachments.value) : null
+    }
     if (isEdit.value) {
-      await updateExpense(formData)
+      await updateExpense(payload)
       ElMessage.success('修改报销成功')
     } else {
-      await addExpense(formData)
+      await addExpense(payload)
       ElMessage.success('提交报销成功')
     }
     dialogVisible.value = false
@@ -289,4 +375,8 @@ onMounted(() => {
 .page-header { display: flex; justify-content: space-between; align-items: center; }
 .search-form { margin-bottom: 16px; }
 .stat-item { margin-bottom: 20px; }
+.attachment-area { width: 100%; }
+.attachment-list { margin-top: 8px; }
+.attachment-item { display: flex; align-items: center; gap: 6px; padding: 4px 0; }
+.attachment-name { font-size: 13px; color: #409EFF; text-decoration: none; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>

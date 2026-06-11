@@ -9,6 +9,7 @@ import com.oasystem.common.Result;
 import com.oasystem.log.annotation.Log;
 import com.oasystem.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +33,7 @@ public class AttendanceController {
     @Log(module = "考勤管理", value = "签到")
     @Operation(summary = "签到")
     @PostMapping("/sign-in")
-    public Result<Void> signIn(@Valid @RequestBody SignInDTO dto) {
+    public Result<Void> signIn(@Parameter(description = "签到信息（含位置）", required = true) @Valid @RequestBody SignInDTO dto) {
         Long userId = securityUtils.getCurrentUserId();
         if (userId == null) return Result.unauthorized("请先登录");
         attendanceService.signIn(userId, dto.getLocation());
@@ -42,7 +43,7 @@ public class AttendanceController {
     @Log(module = "考勤管理", value = "签退")
     @Operation(summary = "签退")
     @PostMapping("/sign-out")
-    public Result<Void> signOut(@Valid @RequestBody SignInDTO dto) {
+    public Result<Void> signOut(@Parameter(description = "签退信息（含位置）", required = true) @Valid @RequestBody SignInDTO dto) {
         Long userId = securityUtils.getCurrentUserId();
         if (userId == null) return Result.unauthorized("请先登录");
         attendanceService.signOut(userId, dto.getLocation());
@@ -52,7 +53,7 @@ public class AttendanceController {
     @Operation(summary = "考勤记录（按月）")
     @GetMapping("/records")
     public Result<List<Attendance>> records(
-            @RequestParam(value = "month", required = false) String month) {
+            @Parameter(description = "月份（yyyy-MM格式），默认当前月") @RequestParam(value = "month", required = false) String month) {
         Long userId = securityUtils.getCurrentUserId();
         if (userId == null) return Result.unauthorized("请先登录");
         if (month == null || month.isEmpty()) {
@@ -65,7 +66,7 @@ public class AttendanceController {
     @Log(module = "考勤管理", value = "申请请假")
     @Operation(summary = "申请请假")
     @PostMapping("/leave")
-    public Result<Long> applyLeave(@Valid @RequestBody LeaveRequestDTO dto) {
+    public Result<Long> applyLeave(@Parameter(description = "请假信息（类型+起止日期+天数）", required = true) @Valid @RequestBody LeaveRequestDTO dto) {
         Long userId = securityUtils.getCurrentUserId();
         if (userId == null) return Result.unauthorized("请先登录");
         LeaveRequest req = new LeaveRequest();
@@ -82,7 +83,7 @@ public class AttendanceController {
     @Operation(summary = "月度考勤汇总统计")
     @GetMapping("/monthly-report")
     public Result<Map<String, Object>> monthlyReport(
-            @RequestParam(value = "month", required = false) String month) {
+            @Parameter(description = "月份（yyyy-MM格式），默认当前月") @RequestParam(value = "month", required = false) String month) {
         Long userId = securityUtils.getCurrentUserId();
         if (userId == null) return Result.unauthorized("请先登录");
         if (month == null || month.isEmpty()) {
@@ -95,7 +96,7 @@ public class AttendanceController {
     @Operation(summary = "月度每日考勤状态明细")
     @GetMapping("/daily-status")
     public Result<List<Map<String, Object>>> dailyStatus(
-            @RequestParam(value = "month", required = false) String month) {
+            @Parameter(description = "月份（yyyy-MM格式），默认当前月") @RequestParam(value = "month", required = false) String month) {
         Long userId = securityUtils.getCurrentUserId();
         if (userId == null) return Result.unauthorized("请先登录");
         if (month == null || month.isEmpty()) {

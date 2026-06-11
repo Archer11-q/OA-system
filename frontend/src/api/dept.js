@@ -19,3 +19,8 @@ export function updateDept(data) {
 export function deleteDept(id) {
   return request({ url: `/oa/system/dept/${id}`, method: 'delete' })
 }
+
+// 各部门用户统计（含子部门汇总）
+export function getDeptUserStats() {
+  return request({ url: '/oa/system/dept/user-stats', method: 'get' })
+}

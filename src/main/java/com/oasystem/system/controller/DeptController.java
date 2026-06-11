@@ -2,6 +2,7 @@ package com.oasystem.system.controller;
 
 import com.oasystem.common.Result;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -49,7 +50,7 @@ public class DeptController {
     @Operation(summary = "新增部门")
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public Result<Void> add(@Valid @RequestBody Dept dept) {
+    public Result<Void> add(@Parameter(description = "部门信息（名称+上级部门等）", required = true) @Valid @RequestBody Dept dept) {
         deptService.createDept(dept);
         return Result.ok("新增成功", null);
     }
@@ -57,7 +58,7 @@ public class DeptController {
     @Operation(summary = "更新部门")
     @PutMapping
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public Result<Void> update(@Valid @RequestBody Dept dept) {
+    public Result<Void> update(@Parameter(description = "部门信息（含ID和要更新的字段）", required = true) @Valid @RequestBody Dept dept) {
         deptService.updateDept(dept);
         return Result.ok("更新成功", null);
     }
@@ -65,8 +66,14 @@ public class DeptController {
     @Operation(summary = "删除部门")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@Parameter(description = "部门ID", required = true) @PathVariable Long id) {
         deptService.deleteDept(id);
         return Result.ok("删除成功", null);
+    }
+
+    @Operation(summary = "各部门用户统计（含子部门汇总）")
+    @GetMapping("/user-stats")
+    public Result<List<Map<String, Object>>> userStats() {
+        return Result.ok(deptService.getUserStats());
     }
 }

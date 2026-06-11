@@ -9,6 +9,7 @@ import com.oasystem.common.Result;
 import com.oasystem.log.annotation.Log;
 import com.oasystem.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,7 @@ public class ApprovalController {
     @Log(module = "审批中心", value = "发起审批")
     @Operation(summary = "发起审批")
     @PostMapping("/start")
-    public Result<Long> start(@Valid @RequestBody StartApprovalDTO dto) {
+    public Result<Long> start(@Parameter(description = "审批发起信息（模板+标题+内容）", required = true) @Valid @RequestBody StartApprovalDTO dto) {
         Long userId = securityUtils.getCurrentUserId();
         if (userId == null) return Result.unauthorized("请先登录");
         Long id = approvalService.start(dto, userId);
@@ -65,7 +66,8 @@ public class ApprovalController {
     @Log(module = "审批中心", value = "审批操作")
     @Operation(summary = "审批操作（同意/驳回）")
     @PostMapping("/{id}/approve")
-    public Result<Void> approve(@PathVariable("id") Long id, @Valid @RequestBody ApproveDTO dto) {
+    public Result<Void> approve(@Parameter(description = "审批实例ID", required = true) @PathVariable("id") Long id,
+                                 @Parameter(description = "审批意见（1=同意，2=驳回）", required = true) @Valid @RequestBody ApproveDTO dto) {
         Long userId = securityUtils.getCurrentUserId();
         if (userId == null) return Result.unauthorized("请先登录");
         approvalService.approve(id, dto.getResult(), dto.getComment(), userId);
@@ -75,7 +77,7 @@ public class ApprovalController {
     @Log(module = "审批中心", value = "撤回审批")
     @Operation(summary = "撤回审批（仅申请人可撤回审批中的实例）")
     @PostMapping("/{id}/cancel")
-    public Result<Void> cancel(@PathVariable("id") Long id) {
+    public Result<Void> cancel(@Parameter(description = "审批实例ID", required = true) @PathVariable("id") Long id) {
         Long userId = securityUtils.getCurrentUserId();
         if (userId == null) return Result.unauthorized("请先登录");
         approvalService.cancel(id, userId);
@@ -84,7 +86,7 @@ public class ApprovalController {
 
     @Operation(summary = "审批记录")
     @GetMapping("/{id}/records")
-    public Result<List<ApprovalRecord>> records(@PathVariable("id") Long id) {
+    public Result<List<ApprovalRecord>> records(@Parameter(description = "审批实例ID", required = true) @PathVariable("id") Long id) {
         return Result.ok(approvalService.getRecords(id));
     }
 }

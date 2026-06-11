@@ -6,6 +6,7 @@ import com.oasystem.expense.service.ExpenseService;
 import com.oasystem.log.annotation.Log;
 import com.oasystem.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,7 @@ public class ExpenseController {
     @Operation(summary = "我的报销列表")
     @GetMapping("/list")
     public Result<List<ExpenseRequest>> list(
-            @RequestParam(value = "status", required = false) Integer status) {
+            @Parameter(description = "审批状态过滤（0=审批中，1=已通过，2=已驳回），不传则查全部") @RequestParam(value = "status", required = false) Integer status) {
         Long userId = securityUtils.getCurrentUserId();
         if (userId == null) return Result.unauthorized("请先登录");
         return Result.ok(expenseService.listByUser(userId, status));
@@ -37,7 +38,7 @@ public class ExpenseController {
 
     @Operation(summary = "报销详情")
     @GetMapping("/{id}")
-    public Result<ExpenseRequest> getById(@PathVariable Long id) {
+    public Result<ExpenseRequest> getById(@Parameter(description = "报销申请ID", required = true) @PathVariable Long id) {
         Long userId = securityUtils.getCurrentUserId();
         if (userId == null) return Result.unauthorized("请先登录");
         ExpenseRequest e = expenseService.getById(id);
@@ -52,7 +53,7 @@ public class ExpenseController {
     @Log(module = "报销管理", value = "提交报销")
     @Operation(summary = "提交报销申请")
     @PostMapping
-    public Result<Void> create(@Valid @RequestBody ExpenseRequest expense) {
+    public Result<Void> create(@Parameter(description = "报销信息（标题+金额+类型+附件等）", required = true) @Valid @RequestBody ExpenseRequest expense) {
         Long userId = securityUtils.getCurrentUserId();
         if (userId == null) return Result.unauthorized("请先登录");
         expense.setUserId(userId);
@@ -62,7 +63,7 @@ public class ExpenseController {
 
     @Operation(summary = "修改报销申请")
     @PutMapping
-    public Result<Void> update(@Valid @RequestBody ExpenseRequest expense) {
+    public Result<Void> update(@Parameter(description = "报销信息（含ID和要更新的字段，仅待审批状态可改）", required = true) @Valid @RequestBody ExpenseRequest expense) {
         Long userId = securityUtils.getCurrentUserId();
         if (userId == null) return Result.unauthorized("请先登录");
         expenseService.update(expense, userId);
@@ -71,7 +72,7 @@ public class ExpenseController {
 
     @Operation(summary = "删除报销申请")
     @DeleteMapping("/{id}")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@Parameter(description = "报销申请ID", required = true) @PathVariable Long id) {
         Long userId = securityUtils.getCurrentUserId();
         if (userId == null) return Result.unauthorized("请先登录");
         expenseService.delete(id, userId);

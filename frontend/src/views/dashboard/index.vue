@@ -16,6 +16,28 @@
       </el-col>
     </el-row>
 
+    <!-- 日程提醒 -->
+    <el-row v-if="reminders.length > 0" style="margin-top: 20px;">
+      <el-col :span="24">
+        <el-card>
+          <template #header>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <el-icon color="#E6A23C"><Bell /></el-icon>
+              <span>近期日程提醒（未来24小时）</span>
+            </div>
+          </template>
+          <div v-for="r in reminders" :key="r.id" class="reminder-item">
+            <el-tag :type="r.priority >= 3 ? 'danger' : r.priority >= 2 ? 'warning' : 'info'" size="small">
+              {{ r.priority >= 3 ? '紧急' : r.priority >= 2 ? '重要' : '普通' }}
+            </el-tag>
+            <span class="reminder-title">{{ r.title }}</span>
+            <span class="reminder-time">{{ formatReminderTime(r.startTime) }}</span>
+            <span v-if="r.location" class="reminder-location">📍 {{ r.location }}</span>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
     <!-- 图表区域 -->
     <el-row :gutter="20" style="margin-top: 20px;">
       <el-col :span="12">
@@ -61,6 +83,7 @@
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getOverview, getAttendanceTrend, getApprovalDistribution, getExpenseDistribution } from '@/api/dashboard'
+import { getScheduleReminders } from '@/api/schedule'
 import * as echarts from 'echarts'
 
 const router = useRouter()
@@ -92,6 +115,30 @@ const expenseChartRef = ref(null)
 let attendanceChart = null
 let approvalChart = null
 let expenseChart = null
+
+// 日程提醒
+const reminders = ref([])
+
+function formatReminderTime(str) {
+  if (!str) return ''
+  const d = new Date(str)
+  const now = new Date()
+  const diffMs = d.getTime() - now.getTime()
+  const diffH = Math.round(diffMs / (1000 * 60 * 60) * 10) / 10
+  const month = d.getMonth() + 1
+  const day = d.getDate()
+  const hour = String(d.getHours()).padStart(2, '0')
+  const min = String(d.getMinutes()).padStart(2, '0')
+  if (diffH <= 1) return `${month}月${day}日 ${hour}:${min}（${Math.round(diffMs / 60000)}分钟后）`
+  return `${month}月${day}日 ${hour}:${min}（约${diffH.toFixed(1)}小时后）`
+}
+
+async function loadReminders() {
+  try {
+    const res = await getScheduleReminders()
+    reminders.value = res.data || []
+  } catch { reminders.value = [] }
+}
 
 // 概览数据
 async function loadOverview() {
@@ -202,6 +249,7 @@ function handleResize() {
 
 onMounted(async () => {
   loadOverview()
+  loadReminders()
   // 等待 DOM 渲染后再初始化图表
   await new Promise(resolve => setTimeout(resolve, 300))
   loadAttendanceTrend()
@@ -254,4 +302,17 @@ onUnmounted(() => {
   font-size: 12px;
   margin-top: 8px;
 }
+
+.reminder-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #ebeef5;
+}
+.reminder-item:last-child { border-bottom: none; }
+.reminder-title { font-weight: 500; flex: 1; }
+.reminder-time { color: #E6A23C; font-size: 13px; }
+.reminder-location { color: #909399; font-size: 13px; }
+
 </style>

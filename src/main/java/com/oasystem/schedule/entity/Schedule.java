@@ -42,6 +42,15 @@ public class Schedule extends BaseEntity {
     /** 参与人ID列表（JSON数组存储） */
     private String participantIds;
 
+    /** 可见性（1=私有/仅自己可见，2=部门可见，3=公开可见） */
+    private Integer visibility;
+
     /** 状态（0=未开始，1=进行中，2=已完成，3=已取消） */
     private Integer status;
+
+    /** 提前提醒分钟数（NULL=不提醒） */
+    private Integer reminderMinutes;
+
+    /** 提醒是否已发送（0=未发送，1=已发送） */
+    private Integer reminderSent;
 }

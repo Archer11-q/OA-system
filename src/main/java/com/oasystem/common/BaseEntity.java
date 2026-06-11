@@ -1,6 +1,7 @@
 package com.oasystem.common;
 
 import com.baomidou.mybatisplus.annotation.*;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -14,30 +15,30 @@ import java.time.LocalDateTime;
 @Data
 public abstract class BaseEntity implements Serializable {
 
-    /** 主键ID（自增） */
+    @Schema(description = "主键ID（自增）")
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    /** 创建时间（自动填充） */
+    @Schema(description = "创建时间（自动填充）")
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
-    /** 更新时间（自动填充） */
+    @Schema(description = "更新时间（自动填充）")
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 
-    /** 创建人ID */
+    @Schema(description = "创建人ID")
     @TableField(fill = FieldFill.INSERT)
     private Long createBy;
 
-    /** 更新人ID */
+    @Schema(description = "更新人ID")
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private Long updateBy;
 
-    /** 逻辑删除标记（0=正常，1=已删除） */
+    @Schema(description = "逻辑删除标记（0=正常，1=已删除）", hidden = true)
     @TableLogic
     private Integer deleted;
 
-    /** 备注 */
+    @Schema(description = "备注")
     private String remark;
 }

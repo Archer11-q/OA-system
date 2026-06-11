@@ -1,37 +1,39 @@
 package com.oasystem.system.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 /**
  * 用户查询DTO
  */
 @Data
+@Schema(description = "用户分页查询条件")
 public class UserQueryDTO {
 
-    /** 当前页码 */
+    @Schema(description = "当前页码", example = "1")
     private Integer pageNum = 1;
 
-    /** 每页条数 */
+    @Schema(description = "每页条数", example = "10")
     private Integer pageSize = 10;
 
-    /** 用户名（模糊查询） */
+    @Schema(description = "用户名（模糊查询）")
     private String username;
 
-    /** 真实姓名（模糊查询） */
+    @Schema(description = "真实姓名（模糊查询）")
     private String realName;
 
-    /** 手机号 */
+    @Schema(description = "手机号")
     private String phone;
 
-    /** 所属部门ID */
+    @Schema(description = "所属部门ID")
     private Long deptId;
 
-    /** 允许查询的部门ID集合（由 dataScope 决定） */
+    @Schema(description = "允许查询的部门ID集合（由 dataScope 决定，后端注入）", hidden = true)
     private java.util.List<Long> allowedDeptIds;
 
-    /** 仅按用户名精确过滤（用于 dataScope=4） */
+    @Schema(description = "仅按用户名精确过滤（dataScope=4时使用）", hidden = true)
     private String onlyUsername;
 
-    /** 状态 */
+    @Schema(description = "状态（0=禁用，1=启用）")
     private Integer status;
 }
