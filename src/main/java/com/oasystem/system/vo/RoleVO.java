@@ -31,5 +31,8 @@ public class RoleVO {
 
     @Schema(description = "创建时间")
     private LocalDateTime createTime;
+
+    @Schema(description = "已分配的菜单ID列表")
+    private java.util.List<Long> menuIds;
 }
 

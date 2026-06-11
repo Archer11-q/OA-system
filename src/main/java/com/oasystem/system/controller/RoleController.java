@@ -42,13 +42,16 @@ public class RoleController {
         return Result.ok(vos);
     }
 
-    @Operation(summary = "根据ID获取角色详情")
+    @Operation(summary = "根据ID获取角色详情（含已分配的菜单ID）")
     @GetMapping("/{id}")
     public Result<RoleVO> getById(@Parameter(description = "角色ID", required = true) @PathVariable Long id) {
         Role r = roleService.getByIdWithCheck(id);
         if (r == null) return Result.notFound("角色不存在");
         RoleVO vo = new RoleVO();
         BeanUtils.copyProperties(r, vo);
+        // 填充该角色已分配的菜单ID列表（供前端菜单分配对话框预选）
+        java.util.List<Long> menuIds = roleService.getMenuIdsByRoleId(id);
+        vo.setMenuIds(menuIds);
         return Result.ok(vo);
     }
 

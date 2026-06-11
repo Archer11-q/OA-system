@@ -21,5 +21,10 @@ public interface RoleService extends IService<Role> {
     void deleteRole(Long id);
 
     void assignMenus(Long roleId, List<Long> menuIds);
+
+    /**
+     * 获取角色已分配的菜单ID列表
+     */
+    List<Long> getMenuIdsByRoleId(Long roleId);
 }
 

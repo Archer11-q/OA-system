@@ -72,6 +72,13 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     }
 
     @Override
+    public List<Long> getMenuIdsByRoleId(Long roleId) {
+        List<RoleMenu> list = roleMenuMapper.selectList(
+                new LambdaQueryWrapper<RoleMenu>().eq(RoleMenu::getRoleId, roleId));
+        return list.stream().map(RoleMenu::getMenuId).toList();
+    }
+
+    @Override
     @Transactional
     public void assignMenus(Long roleId, List<Long> menuIds) {
         // 先删除原有关联

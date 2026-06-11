@@ -203,24 +203,21 @@ async function handleSubmit() {
 
 async function handleAssignMenu(row) {
   currentRoleId.value = row.id
+  // 先清空树的选中状态，避免残留上一个角色的勾选
+  if (menuTreeRef.value) {
+    menuTreeRef.value.setCheckedKeys([])
+  }
   menuDialogVisible.value = true
-  try {
-    const roleRes = await getRoleById(row.id)
-    // 查询角色已拥有的菜单ID并选中
-    // 后端 /role/{id} 返回的 RoleVO 包含 menuIds 字段（如果后端有返回的话）
-    // 这里通过 getMenuTree 获取全部菜单，角色拥有的菜单在 menuIds 里
-    // 简化处理：后续可优化
-  } catch { /* 忽略 */ }
-  // 延迟设置选中状态，等待树渲染完成
+  // 延迟加载该角色的菜单权限，等待树渲染完成
   setTimeout(async () => {
     try {
       const roleRes = await getRoleById(currentRoleId.value)
       const menuIds = roleRes.data?.menuIds || []
-      if (menuTreeRef.value && menuIds.length > 0) {
+      if (menuTreeRef.value) {
         menuTreeRef.value.setCheckedKeys(menuIds)
       }
     } catch { /* 忽略 */ }
-  }, 200)
+  }, 300)
 }
 
 async function handleMenuSubmit() {
