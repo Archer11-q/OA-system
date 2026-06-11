@@ -1,6 +1,7 @@
 package com.oasystem.approval.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oasystem.approval.dto.StartApprovalDTO;
@@ -248,51 +249,84 @@ public class ApprovalServiceImpl implements ApprovalService {
                 .findFirst()
                 .orElseThrow(() -> new BusinessException("您不是当前级别的审批人，无权审批"));
 
-        // 更新当前审批人的记录
-        record.setResult(result);
-        record.setComment(comment);
-        record.setApprovalTime(LocalDateTime.now());
-        recordMapper.updateById(record);
+        // 更新当前审批人的记录（条件更新：只有 result=0 时才更新，防止双击/并发重复审批）
+        LambdaUpdateWrapper<ApprovalRecord> recordUpdateWrapper = new LambdaUpdateWrapper<>();
+        recordUpdateWrapper.eq(ApprovalRecord::getId, record.getId())
+                           .eq(ApprovalRecord::getResult, 0);  // 确保记录仍为待审批状态
+        ApprovalRecord updateRecord = new ApprovalRecord();
+        updateRecord.setResult(result);
+        updateRecord.setComment(comment);
+        updateRecord.setApprovalTime(LocalDateTime.now());
+        int recordUpdated = recordMapper.update(updateRecord, recordUpdateWrapper);
+        if (recordUpdated == 0) {
+            throw new BusinessException("该审批记录已被处理，请刷新页面后重试");
+        }
 
         // 作废同级别其他审批人的待审批记录（并行审批：一人处理后其余自动作废）
-        List<ApprovalRecord> otherPending = currentLevelRecords.stream()
-                .filter(r -> !r.getApproverId().equals(currentUserId))
-                .collect(Collectors.toList());
-        for (ApprovalRecord other : otherPending) {
-            other.setResult(Constants.APPROVAL_AUTO_VOIDED);
-            other.setComment("其他审批人已处理，本记录自动作废");
-            other.setApprovalTime(LocalDateTime.now());
-            recordMapper.updateById(other);
-        }
-        if (!otherPending.isEmpty()) {
-            log.info("并行审批作废其他记录, instanceId={}, level={}, voidedCount={}",
-                    instanceId, instance.getCurrentLevel(), otherPending.size());
+        // 同样使用条件更新，避免并发问题
+        for (ApprovalRecord other : currentLevelRecords) {
+            if (other.getApproverId().equals(currentUserId)) continue;
+            LambdaUpdateWrapper<ApprovalRecord> voidUpdateWrapper = new LambdaUpdateWrapper<>();
+            voidUpdateWrapper.eq(ApprovalRecord::getId, other.getId())
+                             .eq(ApprovalRecord::getResult, 0);
+            ApprovalRecord voidRecord = new ApprovalRecord();
+            voidRecord.setResult(Constants.APPROVAL_AUTO_VOIDED);
+            voidRecord.setComment("其他审批人已处理，本记录自动作废");
+            voidRecord.setApprovalTime(LocalDateTime.now());
+            recordMapper.update(voidRecord, voidUpdateWrapper);
         }
 
-        // 状态流转
+        // 状态流转（条件更新实例状态，防止并发重复操作）
+        LambdaUpdateWrapper<ApprovalInstance> instanceUpdateWrapper = new LambdaUpdateWrapper<>();
+        instanceUpdateWrapper.eq(ApprovalInstance::getId, instanceId)
+                             .eq(ApprovalInstance::getStatus, Constants.APPROVAL_PENDING);
+
         if (result == Constants.APPROVAL_REJECTED) {
             // 驳回：直接结束
-            instance.setStatus(Constants.APPROVAL_REJECTED);
-            instance.setFinishTime(LocalDateTime.now());
-            instanceMapper.updateById(instance);
-            log.info("审批驳回, instanceId={}, approverId={}", instanceId, currentUserId);
-            // 回调更新关联业务记录状态
-            syncBusinessStatus(instance);
+            ApprovalInstance updateInstance = new ApprovalInstance();
+            updateInstance.setStatus(Constants.APPROVAL_REJECTED);
+            updateInstance.setFinishTime(LocalDateTime.now());
+            int instUpdated = instanceMapper.update(updateInstance, instanceUpdateWrapper);
+            if (instUpdated == 0) {
+                log.warn("审批实例状态更新失败（可能已被并发处理）, instanceId={}", instanceId);
+            } else {
+                log.info("审批驳回, instanceId={}, approverId={}", instanceId, currentUserId);
+                // 刷新实例数据用于回调
+                instance.setStatus(Constants.APPROVAL_REJECTED);
+                instance.setFinishTime(LocalDateTime.now());
+                syncBusinessStatus(instance);
+            }
         } else {
             // 同意：检查是否还有下一级
             if (instance.getCurrentLevel() < instance.getTotalLevels()) {
-                // 推进到下一级
-                instance.setCurrentLevel(instance.getCurrentLevel() + 1);
-                instanceMapper.updateById(instance);
-                log.info("审批推进, instanceId={}, currentLevel={}", instanceId, instance.getCurrentLevel());
+                // 推进到下一级（只更新 currentLevel，不更新 status）
+                LambdaUpdateWrapper<ApprovalInstance> advanceWrapper = new LambdaUpdateWrapper<>();
+                advanceWrapper.eq(ApprovalInstance::getId, instanceId)
+                              .eq(ApprovalInstance::getStatus, Constants.APPROVAL_PENDING)
+                              .eq(ApprovalInstance::getCurrentLevel, instance.getCurrentLevel());
+                ApprovalInstance advanceInstance = new ApprovalInstance();
+                advanceInstance.setCurrentLevel(instance.getCurrentLevel() + 1);
+                int advUpdated = instanceMapper.update(advanceInstance, advanceWrapper);
+                if (advUpdated == 0) {
+                    log.warn("审批推进失败（可能已被并发处理）, instanceId={}", instanceId);
+                } else {
+                    log.info("审批推进, instanceId={}, currentLevel={}", instanceId, instance.getCurrentLevel() + 1);
+                }
             } else {
                 // 最后一级通过
-                instance.setStatus(Constants.APPROVAL_APPROVED);
-                instance.setFinishTime(LocalDateTime.now());
-                instanceMapper.updateById(instance);
-                log.info("审批通过, instanceId={}", instanceId);
-                // 回调更新关联业务记录状态
-                syncBusinessStatus(instance);
+                ApprovalInstance approveInstance = new ApprovalInstance();
+                approveInstance.setStatus(Constants.APPROVAL_APPROVED);
+                approveInstance.setFinishTime(LocalDateTime.now());
+                int instUpdated = instanceMapper.update(approveInstance, instanceUpdateWrapper);
+                if (instUpdated == 0) {
+                    log.warn("审批通过状态更新失败（可能已被并发处理）, instanceId={}", instanceId);
+                } else {
+                    log.info("审批通过, instanceId={}", instanceId);
+                    // 刷新实例数据用于回调
+                    instance.setStatus(Constants.APPROVAL_APPROVED);
+                    instance.setFinishTime(LocalDateTime.now());
+                    syncBusinessStatus(instance);
+                }
             }
         }
     }

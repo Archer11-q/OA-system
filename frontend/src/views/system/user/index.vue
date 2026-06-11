@@ -30,6 +30,11 @@
         <el-table-column prop="id" label="ID" width="60" />
         <el-table-column prop="username" label="用户名" />
         <el-table-column prop="realName" label="真实姓名" />
+        <el-table-column prop="deptName" label="部门">
+          <template #default="{ row }">
+            {{ row.deptName || (row.deptId ? 'ID:' + row.deptId : '-') }}
+          </template>
+        </el-table-column>
         <el-table-column prop="employeeNo" label="工号" />
         <el-table-column prop="phone" label="手机号" />
         <el-table-column prop="email" label="邮箱" />

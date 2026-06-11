@@ -38,6 +38,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final JwtTokenProvider jwtTokenProvider;
     private final com.oasystem.system.mapper.UserRoleMapper userRoleMapper;
     private final com.oasystem.system.mapper.RoleMapper roleMapper;
+    private final com.oasystem.system.mapper.DeptMapper deptMapper;
     private final com.oasystem.security.SecurityUtils securityUtils;
 
     @Override
@@ -217,6 +218,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private UserVO toVO(User user) {
         UserVO vo = new UserVO();
         BeanUtils.copyProperties(user, vo);
+        // 填充部门名称
+        if (user.getDeptId() != null) {
+            com.oasystem.system.entity.Dept dept = deptMapper.selectById(user.getDeptId());
+            if (dept != null) {
+                vo.setDeptName(dept.getDeptName());
+            }
+        }
         return vo;
     }
 }

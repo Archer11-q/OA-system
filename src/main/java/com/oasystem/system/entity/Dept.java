@@ -1,9 +1,13 @@
 package com.oasystem.system.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.oasystem.common.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 部门实体
@@ -30,4 +34,8 @@ public class Dept extends BaseEntity {
 
     /** 所有父级ID（用逗号分隔，如 "0,1,5"） */
     private String ancestors;
+
+    /** 子部门列表（非数据库字段，仅用于树形返回） */
+    @TableField(exist = false)
+    private List<Dept> children = new ArrayList<>();
 }

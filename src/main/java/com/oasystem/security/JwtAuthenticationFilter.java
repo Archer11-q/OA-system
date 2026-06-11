@@ -14,7 +14,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import java.util.Collections;
 
 /**
  * JWT 认证过滤器
@@ -56,10 +55,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (Exception ex) {
-                log.warn("加载用户详情失败，使用匿名认证: {}", ex.getMessage());
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                // 加载用户权限失败时，不要创建空权限的认证，否则用户会以无权限状态登录
+                // 改为不设置认证上下文，让请求以未认证状态继续，触发 401 返回明确错误
+                log.error("加载用户详情失败（将拒绝本次请求）: userId={}, username={}, error={}",
+                        userId, username, ex.getMessage(), ex);
+                // 不设置 SecurityContext，后续 SecurityConfig 会返回 401
             }
         }
 

@@ -31,7 +31,7 @@ public class DeptController {
     @GetMapping("/tree")
     public Result<List<Dept>> tree() {
         List<Dept> list = deptService.listAll();
-        // 组装树
+        // 组装树：将子部门挂载到父部门的 children 列表中
         Map<Long, Dept> map = list.stream().collect(java.util.stream.Collectors.toMap(Dept::getId, d -> d));
         List<Dept> roots = new java.util.ArrayList<>();
         for (Dept d : list) {
@@ -40,7 +40,10 @@ public class DeptController {
             } else {
                 Dept p = map.get(d.getParentId());
                 if (p != null) {
-                    // 没有 children 字段，前端可以按 ancestors 组装，直接返回扁平列表或根节点列表
+                    p.getChildren().add(d);
+                } else {
+                    // 父部门不存在时，作为根节点
+                    roots.add(d);
                 }
             }
         }

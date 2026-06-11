@@ -19,6 +19,11 @@
       >
         <el-table-column prop="id" label="ID" width="60" />
         <el-table-column prop="deptName" label="部门名称" />
+        <el-table-column label="负责人" width="100">
+          <template #default="{ row }">
+            {{ row._leaderName || (row.leaderId ? 'ID:' + row.leaderId : '-') }}
+          </template>
+        </el-table-column>
         <el-table-column label="本部门人数" width="100" align="center">
           <template #default="{ row }">
             <el-tag size="small" type="info">{{ row._directCount ?? 0 }}</el-tag>
@@ -51,7 +56,7 @@
     </el-card>
 
     <!-- 新增/编辑对话框 -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="480px" @close="handleDialogClose">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="520px" @close="handleDialogClose">
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="80px">
         <el-form-item label="上级部门">
           <el-tree-select
@@ -66,6 +71,16 @@
         </el-form-item>
         <el-form-item label="部门名称" prop="deptName">
           <el-input v-model="formData.deptName" placeholder="请输入部门名称" />
+        </el-form-item>
+        <el-form-item label="负责人">
+          <el-select v-model="formData.leaderId" placeholder="请选择负责人" clearable filterable style="width: 100%">
+            <el-option
+              v-for="u in userOptions"
+              :key="u.id"
+              :label="u.realName + ' (' + u.username + ')'"
+              :value="u.id"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="排序">
           <el-input-number v-model="formData.sort" :min="0" :max="999" />
@@ -88,6 +103,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { getDeptTree, addDept, updateDept, deleteDept, getDeptUserStats } from '@/api/dept'
+import { getUserPage } from '@/api/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const loading = ref(false)
@@ -99,9 +115,14 @@ const isEdit = ref(false)
 const submitLoading = ref(false)
 const formRef = ref(null)
 
+// 用户列表（用于负责人选择）
+const userOptions = ref([])
+
 const defaultForm = () => ({
+  id: undefined,
   parentId: null,
   deptName: '',
+  leaderId: null,
   sort: 0,
   status: 1,
   remark: ''
@@ -119,6 +140,19 @@ const deptTreeSelectData = computed(() => {
   return [{ id: 0, deptName: '顶级部门', children: tableData.value }]
 })
 
+// 查找部门树中所有节点的最大 sort 值
+function findMaxSort(tree) {
+  let max = 0
+  for (const node of tree) {
+    if ((node.sort ?? 0) > max) max = node.sort
+    if (node.children && node.children.length > 0) {
+      const childMax = findMaxSort(node.children)
+      if (childMax > max) max = childMax
+    }
+  }
+  return max
+}
+
 // 递归合并用户统计到树节点
 function mergeUserStats(tree, statsMap) {
   for (const node of tree) {
@@ -129,6 +163,18 @@ function mergeUserStats(tree, statsMap) {
     }
     if (node.children && node.children.length > 0) {
       mergeUserStats(node.children, statsMap)
+    }
+  }
+}
+
+// 递归填充负责人名称
+function mergeLeaderNames(tree, userMap) {
+  for (const node of tree) {
+    if (node.leaderId && userMap[node.leaderId]) {
+      node._leaderName = userMap[node.leaderId]
+    }
+    if (node.children && node.children.length > 0) {
+      mergeLeaderNames(node.children, userMap)
     }
   }
 }
@@ -152,10 +198,26 @@ async function fetchData() {
     // 合并到树节点
     mergeUserStats(tree, statsMap)
 
+    // 填充负责人名称
+    const userMap = {}
+    for (const u of userOptions.value) {
+      userMap[u.id] = u.realName || u.username
+    }
+    mergeLeaderNames(tree, userMap)
+
     tableData.value = tree
   } finally {
     loading.value = false
   }
+}
+
+async function loadUsers() {
+  try {
+    const res = await getUserPage({ pageNum: 1, pageSize: 200 })
+    if (res.data) {
+      userOptions.value = res.data.records || []
+    }
+  } catch { /* 忽略 */ }
 }
 
 function handleAdd(parent) {
@@ -165,6 +227,10 @@ function handleAdd(parent) {
   if (parent) {
     formData.parentId = parent.id
   }
+  // 自动计算下一个排序号：当前同级别最大 sort + 1
+  const siblings = parent ? (parent.children || []) : tableData.value
+  const maxSort = siblings.reduce((max, d) => Math.max(max, d.sort ?? 0), 0)
+  formData.sort = maxSort + 1
   dialogVisible.value = true
 }
 
@@ -175,6 +241,7 @@ function handleEdit(row) {
     id: row.id,
     parentId: row.parentId || 0,
     deptName: row.deptName || '',
+    leaderId: row.leaderId || null,
     sort: row.sort ?? 0,
     status: row.status ?? 1,
     remark: row.remark || ''
@@ -218,7 +285,10 @@ function handleDelete(row) {
   }).catch(() => {})
 }
 
-onMounted(fetchData)
+onMounted(async () => {
+  await loadUsers()
+  fetchData()
+})
 </script>
 
 <style scoped>

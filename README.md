@@ -94,6 +94,8 @@ npm run dev
 访问 http://localhost:5173（已配置代理到后端 `localhost:8080`）
 
 > **默认账号**：`admin` / `123456`
+>
+> 📖 **使用说明**：详见 [`doc/USAGE.md`](doc/USAGE.md)（含菜单显隐控制、部门管理、常见问题排错等）
 
 ### 3. Docker 一键部署（MySQL + 应用）
 

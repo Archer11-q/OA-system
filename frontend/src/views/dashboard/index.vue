@@ -16,6 +16,43 @@
       </el-col>
     </el-row>
 
+    <!-- 部门列表 -->
+    <el-row style="margin-top: 20px;">
+      <el-col :span="24">
+        <el-card>
+          <template #header>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <el-icon color="#67C23A"><OfficeBuilding /></el-icon>
+              <span>部门列表</span>
+            </div>
+          </template>
+          <el-table :data="deptList" border stripe size="small" max-height="300">
+            <el-table-column prop="deptName" label="部门名称" />
+            <el-table-column label="本部门人数" width="120" align="center">
+              <template #default="{ row }">
+                <el-tag size="small" type="info">{{ row._directCount ?? 0 }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="总人数（含下级）" width="140" align="center">
+              <template #default="{ row }">
+                <el-tag size="small" :type="(row._totalCount ?? 0) > 0 ? 'primary' : 'info'">
+                  {{ row._totalCount ?? 0 }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="sort" label="排序" width="70" align="center" />
+            <el-table-column label="状态" width="80" align="center">
+              <template #default="{ row }">
+                <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
+                  {{ row.status === 1 ? '启用' : '禁用' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
+      </el-col>
+    </el-row>
+
     <!-- 日程提醒 -->
     <el-row v-if="reminders.length > 0" style="margin-top: 20px;">
       <el-col :span="24">
@@ -80,10 +117,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
 import { getOverview, getAttendanceTrend, getApprovalDistribution, getExpenseDistribution } from '@/api/dashboard'
 import { getScheduleReminders } from '@/api/schedule'
+import { getDeptTree, getDeptUserStats } from '@/api/dept'
 import * as echarts from 'echarts'
 
 const router = useRouter()
@@ -118,6 +156,41 @@ let expenseChart = null
 
 // 日程提醒
 const reminders = ref([])
+
+// 部门列表
+const deptList = ref([])
+
+async function loadDeptList() {
+  try {
+    const [treeRes, statsRes] = await Promise.all([
+      getDeptTree(),
+      getDeptUserStats()
+    ])
+    const tree = treeRes.data || []
+    const stats = statsRes.data || []
+    const statsMap = {}
+    for (const s of stats) {
+      statsMap[s.deptId] = s
+    }
+    // 扁平化树并附加统计
+    function flatten(nodes) {
+      const result = []
+      for (const n of nodes) {
+        const s = statsMap[n.id]
+        result.push({
+          ...n,
+          _directCount: s?.directCount ?? 0,
+          _totalCount: s?.totalCount ?? 0
+        })
+        if (n.children && n.children.length > 0) {
+          result.push(...flatten(n.children))
+        }
+      }
+      return result
+    }
+    deptList.value = flatten(tree)
+  } catch { deptList.value = [] }
+}
 
 function formatReminderTime(str) {
   if (!str) return ''
@@ -247,8 +320,22 @@ function handleResize() {
   expenseChart?.resize()
 }
 
+// 刷新概览数据（不重建图表实例，仅更新数据集）
+async function refreshOverviewData() {
+  await Promise.all([
+    loadOverview(),
+    loadDeptList(),
+    loadReminders()
+  ])
+  // 图表数据刷新
+  loadAttendanceTrend()
+  loadApprovalDistribution()
+  loadExpenseDistribution()
+}
+
 onMounted(async () => {
   loadOverview()
+  loadDeptList()
   loadReminders()
   // 等待 DOM 渲染后再初始化图表
   await new Promise(resolve => setTimeout(resolve, 300))
@@ -256,6 +343,11 @@ onMounted(async () => {
   loadApprovalDistribution()
   loadExpenseDistribution()
   window.addEventListener('resize', handleResize)
+})
+
+// keep-alive 激活时刷新数据（新增用户/部门后数据看板同步更新）
+onActivated(() => {
+  refreshOverviewData()
 })
 
 onUnmounted(() => {
