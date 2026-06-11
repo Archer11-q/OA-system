@@ -1,93 +1,201 @@
-# OA System — 全栈（Vue 3 + Spring Boot）
+<p align="center">
+  <h1 align="center">🏢 OA System</h1>
+  <p align="center"><strong>全栈企业级办公自动化系统</strong></p>
+  <p align="center">Vue 3 + Element Plus · Spring Boot 3.2 · MyBatis-Plus · Spring Security + JWT</p>
+</p>
 
-本仓库包含 OA 办公自动化系统的后端（Spring Boot + MyBatis-Plus + JWT）与前端（Vue 3 + Element Plus）源码及文档。
+<p align="center">
+  <img src="https://img.shields.io/badge/JDK-21_LTS-orange?logo=openjdk" alt="JDK 21">
+  <img src="https://img.shields.io/badge/Spring_Boot-3.2.7-brightgreen?logo=springboot" alt="Spring Boot 3.2.7">
+  <img src="https://img.shields.io/badge/Vue-3.x-4FC08D?logo=vuedotjs" alt="Vue 3">
+  <img src="https://img.shields.io/badge/MySQL-8.0-blue?logo=mysql" alt="MySQL 8.0">
+  <img src="https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker" alt="Docker">
+  <img src="https://img.shields.io/badge/License-MIT-green" alt="License">
+</p>
 
-## 快速运行
+---
 
-### 后端（开发环境，内置 H2）
+## 📖 项目简介
 
-```powershell
-cd D:\CLion\oa-system
-D:\CLion\tools\apache-maven-3.9.16\bin\mvn spring-boot:run
+OA System 是一套**前后端分离**的企业级办公自动化系统，覆盖企业日常行政管理的核心场景：用户与权限管理、考勤打卡、多级审批流程、公告通知、日程管理、费用报销，并配备数据看板与操作日志。
+
+适合作为：**课程设计 / 毕业设计** 交付，或 **全栈开发学习** 参考项目。
+
+### ✨ 核心特性
+
+| 模块 | 核心能力 |
+|------|---------|
+| 🔐 **系统管理** | 用户/角色/菜单/部门 CRUD + RBAC 权限模型 + 数据权限（dataScope） |
+| 📋 **考勤管理** | 签到签退（自动判定迟到早退）+ 月度汇总 + 每日明细 + 请假审批联动 |
+| ✅ **审批中心** | 多级审批引擎（DEPT_LEADER / ROLE / USER 三种审批人）+ 模板管理 + 撤回 + 业务回调 |
+| 📢 **公告通知** | 发布/编辑/删除 + 分页列表 + 详情查看 |
+| 📅 **日程管理** | CRUD + 日期范围查询 + 参与人 + 个人权限控制 |
+| 💰 **报销管理** | CRUD + 按状态过滤 + 金额统计 + 审批联动 |
+| 📊 **数据看板** | 系统概览 + 考勤趋势 + 审批/报销分布（ECharts 图表） |
+| 📝 **操作日志** | AOP 自动记录（@Log 注解）+ 分页查询 + 定时清理 |
+| 📎 **文件上传** | 通用上传 + 头像上传 + 类型校验 + UUID 防冲突 |
+
+---
+
+## 🛠 技术栈
+
+| 层次 | 技术 | 说明 |
+|------|------|------|
+| **后端框架** | Spring Boot 3.2.7 | 内嵌 Tomcat，开箱即用 |
+| **ORM** | MyBatis-Plus 3.5.6 | Lambda 查询、分页插件、自动填充 |
+| **安全** | Spring Security 6.x + JWT (jjwt 0.12) | 无状态认证、RBAC 权限、BCrypt 加密 |
+| **数据库** | MySQL 8.0（生产）/ H2（开发） | H2 零配置启动，开箱即用 |
+| **API 文档** | Knife4j 4.3 (Swagger 增强) | 接口文档自动生成 + 在线调试 |
+| **工具库** | Hutool 5.8 + Lombok | 集合/日期/加密工具 + 代码简化 |
+| **前端框架** | Vue 3 + Vite | Composition API + 快速构建 |
+| **UI 组件** | Element Plus | 企业级桌面端组件库 |
+| **状态管理** | Pinia | Vue 3 官方推荐 |
+| **图表** | ECharts 5.x | 数据看板可视化 |
+| **构建部署** | Maven + Docker + Docker Compose | 多阶段构建，一键部署 |
+
+---
+
+## 🚀 快速开始
+
+### 前置要求
+
+- **JDK 21+**
+- **Maven 3.9+**
+- **Node.js 18+**（前端）
+- **Docker Desktop**（可选，用于容器化部署）
+
+### 1. 后端启动（开发环境，内置 H2 数据库）
+
+```bash
+# 克隆项目
+git clone <your-repo-url>
+cd oa-system
+
+# 启动 Spring Boot（H2 自动初始化，无需安装数据库）
+mvn spring-boot:run
 ```
 
-访问：
-- 应用根路径: http://localhost:8080/oa
-- API 文档（Knife4j/Swagger）： http://localhost:8080/oa/doc.html
-- H2 控制台： http://localhost:8080/oa/h2-console （JDBC URL: jdbc:h2:file:./data/oa-system，用户: sa，密码: 空）
+启动后访问：
 
-### 前端（Vue 3 + Element Plus）
+| 地址 | 说明 |
+|------|------|
+| http://localhost:8080/oa | 应用根路径 |
+| http://localhost:8080/oa/doc.html | Knife4j API 文档（在线调试） |
+| http://localhost:8080/oa/h2-console | H2 控制台（JDBC URL: `jdbc:h2:file:./data/oa-system`，用户 `sa`，密码空） |
 
-```powershell
-cd D:\CLion\oa-system\frontend
+### 2. 前端启动
+
+```bash
+cd frontend
 npm install
 npm run dev
 ```
 
-访问：http://localhost:5173 （自动代理后端 localhost:8080，默认账号 admin/123456）
+访问 http://localhost:5173（已配置代理到后端 `localhost:8080`）
 
-### Docker 一键部署
+> **默认账号**：`admin` / `123456`
 
-```powershell
-cd D:\CLion\oa-system
-docker compose up -d   # 注意：Docker Desktop 使用 "docker compose"（空格），非 "docker-compose"（连字符）
+### 3. Docker 一键部署（MySQL + 应用）
+
+```bash
+docker compose up -d    # Docker Desktop 使用 "docker compose"（空格）
+
+# 查看日志
+docker compose logs -f oa-app
+
+# 停止
+docker compose down
 ```
 
-## 项目当前状态（与 `doc/DESIGN.md` 保持一致）
-
-- 模块1 - 系统管理：✅ 用户/角色/菜单/部门 CRUD + RBAC 权限 + 数据权限（dataScope）+ 文件上传 + 数据看板
-- 模块2 - 考勤：✅ 签到/签退（迟到早退判定）+ 月度汇总 + 每日明细 + 请假自动创建多级审批（DEV-22）
-- 模块3 - 审批中心：✅ 多级审批引擎（DEPT_LEADER/ROLE/USER 三种审批人）+ 模板管理 + 撤回功能（DEV-26）+ 请假/报销状态回调
-- 模块4 - 公告通知：✅ 列表/详情/发布/编辑/删除
-- 模块5 - 日程管理：✅ CRUD + 日期范围查询 + 个人权限控制
-- 模块6 - 报销管理：✅ CRUD + 统计 + 自动创建多级审批（DEV-25）
-- 操作日志：✅ AOP 自动记录（@Log 注解）
-- 前端：✅ Vue 3 + Element Plus + Router + Pinia（DEV-28/DEV-29）：登录/布局/数据看板(ECharts图表)/用户管理(CRUD)/角色管理(CRUD+菜单分配)/菜单管理(树形)/部门管理(树形)/考勤管理(签到签退+请假+统计)/审批中心(多Tab+时间线)/公告通知(CRUD)/日程管理(CRUD)/报销管理(CRUD+统计)
-- 测试：✅ 22 单元测试（ApprovalServiceImpl / AttendanceServiceImpl / UserServiceImpl）
-- 部署：✅ Dockerfile 多阶段构建 + docker-compose.yml（MySQL + App）
-
-主要开发/迭代记录简要（最新在 `doc/DESIGN.md` 中）：
-
- - DEV-01..DEV-07：项目骨架、JWT+Security、角色/菜单/部门管理与权限
- - DEV-08：考勤模块基础（签到/签退/请假）
- - DEV-09：公告模块基础
- - DEV-10：审批中心骨架（模板/实例/记录）
- - DEV-11..DEV-14：RBAC 完善、dataScope、菜单安全增强
- - DEV-15：日程管理 CRUD
- - DEV-16：审批中心多级审批引擎完善
- - DEV-17：报销管理 CRUD
- - DEV-18：考勤统计增强（迟到/早退判定+月度报表）
- - DEV-19：操作日志 AOP（@Log注解+切面）
- - DEV-20：文件上传（通用+头像+静态资源映射）
- - DEV-21：数据看板 API（概览/趋势/分布）
- - DEV-22：请假申请与审批中心集成（自动创建审批实例+审批完成回调同步状态）
- - DEV-23：MySQL 生产环境配置（application-prod.yml + HikariCP 连接池 + 文件日志）
- - DEV-24：单元测试（JUnit 5 + Mockito 覆盖三大核心 Service，19 测试用例全部通过）
- - DEV-25：报销申请与审批中心集成（自动创建审批实例+审批完成回调同步状态）
- - DEV-26：审批撤回功能（申请人撤回审批中实例+同步业务状态）
- - DEV-27：Docker 部署（Dockerfile 多阶段构建 + docker-compose.yml MySQL+App）
- - DEV-28：前端项目初始化（Vue 3 + Element Plus + Router + Pinia + Axios，登录+布局+看板+用户管理）
- - DEV-29：前端业务页面全面完善（8个API模块+10个页面完善+ECharts图表集成）
- - HOTFIX：修复 DashboardController 第104行 int 基本类型 equals() 编译错误
-
-Phase 1-5 全部完成。后端 6 大模块 + 审批流程闭环 + 前端框架就绪。
-
-说明与注意：
-- `doc/DESIGN.md` 是主设计与迭代记录文档，后续请以该文件为权威进度记录。README 只保留高层摘要与启动说明。
-- 你打算把 `DESIGN.md` 给其他智能体使用时，我会保持该文件为单一真实来源（同步更新实现/未实现项），并把 README 保持为简短引用。
-- ⚠️ **H2 数据库注意**：修改 `schema-h2.sql` 后需手动删除 `data/oa-system.mv.db`（`CREATE TABLE IF NOT EXISTS` 不会更新已有表），重启即自动重建。
-- ⚠️ **Docker 命令**：Docker Desktop 使用 `docker compose up -d`（空格），旧版 `docker-compose`（连字符）已废弃。
-- **最新修复（2026-06-11）**：创建缺失的 RoleMapper.xml / MenuMapper.xml / AttendanceMapper.xml，开启 SecurityConfig JWT 认证，修复前端路由守卫 Token 过期判断，修复 H2 数据库列名不匹配导致的 500 错误。
-
-详细技术设计、接口说明和数据字典请查看 `doc/DESIGN.md`。
+> **注意**：新版 Docker Desktop 使用 `docker compose`（空格），旧版使用 `docker-compose`（连字符）。
 
 ---
 
-## 下一步可开展工作
+## 📂 项目结构
+
+```
+oa-system/
+├── src/main/java/com/oasystem/
+│   ├── system/          # 模块1：系统管理（用户/角色/菜单/部门）
+│   ├── attendance/      # 模块2：考勤管理（签到/请假/统计）
+│   ├── approval/        # 模块3：审批中心（多级引擎/模板/撤回）
+│   ├── notice/          # 模块4：公告通知
+│   ├── schedule/        # 模块5：日程管理
+│   ├── expense/         # 模块6：报销管理
+│   ├── log/             # 操作日志（AOP）
+│   ├── config/          # Spring Security / CORS / MyBatis-Plus
+│   └── security/        # JWT 认证（Token 生成/解析/过滤器）
+├── src/main/resources/
+│   ├── application-dev.yml       # 开发环境（H2）
+│   ├── application-prod.yml      # 生产环境（MySQL + HikariCP）
+│   ├── db/schema-h2.sql          # H2 建表脚本
+│   ├── db/data.sql               # 初始数据
+│   └── mapper/                   # MyBatis XML 映射
+├── frontend/                     # Vue 3 前端项目
+│   └── src/
+│       ├── api/                  # API 模块（8个业务模块）
+│       ├── views/                # 页面视图（10个页面）
+│       ├── stores/               # Pinia 状态管理
+│       ├── router/               # 路由 + 守卫
+│       └── layout/               # 主布局（侧边栏 + Header）
+├── sql/schema-mysql.sql          # MySQL 完整建表脚本
+├── Dockerfile                    # 多阶段构建
+├── docker-compose.yml            # Docker Compose（MySQL + App）
+├── doc/DESIGN.md                 # 详细设计文档（含 DEV 迭代记录）
+└── pom.xml
+```
+
+---
+
+## 🔒 安全设计
+
+- **认证**：JWT 无状态 Token，24 小时有效期，前端路由守卫解析 `exp` 判定过期
+- **授权**：RBAC 模型 — 用户 → 角色 → 菜单/权限，接口级 `@PreAuthorize` 控制
+- **密码**：BCrypt 加密存储，默认密码 `123456`
+- **数据权限**：`dataScope` 字段控制（全部数据 / 本部门 / 仅本人）
+- **401/403**：统一 JSON 响应，Axios 拦截器自动跳转登录页
+
+---
+
+## 📊 开发进度
+
+| 阶段 | 内容 | 状态 |
+|------|------|:--:|
+| Phase 1 | 基础框架（Maven + Spring Boot + H2 + 通用组件） | ✅ |
+| Phase 2 | 系统管理完善（JWT + RBAC + 用户/角色/菜单/部门） | ✅ |
+| Phase 3 | 核心业务（考勤 + 请假 + 审批引擎 + 公告） | ✅ |
+| Phase 4 | 扩展模块（日程 + 报销 + 操作日志 + 文件上传 + 看板） | ✅ |
+| Phase 5 | 上线准备（MySQL 切换 + 单元测试 + Docker） | ✅ |
+| **测试** | JUnit 5 + Mockito，覆盖 Approval / Attendance / User 核心 Service | ✅ 33 用例 |
+
+> 详细的 DEV 迭代日志、API 接口文档、数据库设计，请查看 **[doc/DESIGN.md](doc/DESIGN.md)**。
+
+---
+
+## ⚠️ 注意事项
+
+- **H2 数据库修改**：修改 `schema-h2.sql` 后，需**手动删除** `data/oa-system.mv.db` 文件再重启，`CREATE TABLE IF NOT EXISTS` 不会更新已有表结构。
+- **Docker 命令**：Docker Desktop 使用 `docker compose`（空格），不是旧的 `docker-compose`（连字符）。
+- **生产部署**：切换到 MySQL 请使用 `application-prod.yml`（含 HikariCP 连接池 + 文件日志），先执行 `sql/schema-mysql.sql` 建表。
+- **配置文件**：启动前请修改 `application-prod.yml` 中的数据库用户名/密码。
+
+---
+
+## 🔮 后续可扩展
 
 | 优先级 | 方向 | 说明 |
-|--------|------|------|
-| 🟡 | 并行审批策略 | 同一级别多人审批，任一人同意即可 |
-| 🟡 | 日程日历视图 | FullCalendar 组件对接，日/周/月视图 |
-| 🟡 | 前端性能优化 | 路由懒加载、组件缓存、打包优化 |
-| 🟡 | 接口文档完善 | 补充 Knife4j 文档注解细节 |
+|:--:|------|------|
+| ✅ | 并行审批 | 同一级别多人审批，任一人同意即可通过（DEV-30） |
+| 🟡 | 日程日历视图 | FullCalendar 对接，日/周/月视图 |
+| 🟡 | 前端优化 | 路由懒加载、组件缓存、打包优化 |
+| 🟡 | 接口文档 | 补充 Knife4j 注解细节 |
+
+---
+
+## 📄 License
+
+MIT License
+
+---
+
+> **详细设计文档**：[doc/DESIGN.md](doc/DESIGN.md) — 含完整 API 接口、数据库设计、DEV 迭代记录、部署说明。

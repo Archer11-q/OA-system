@@ -111,13 +111,12 @@ class ApprovalServiceImplTest {
         when(userMapper.selectById(10L)).thenReturn(applicant);
         when(deptMapper.selectById(2L)).thenReturn(dept);
 
-        // ROLE 类型审批人解析
+        // ROLE 类型审批人解析（ROLE 类型不需要查 userMapper）
         when(roleMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(adminRole);
         UserRole ur = new UserRole();
         ur.setUserId(30L);
         ur.setRoleId(1L);
         when(userRoleMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(ur));
-        when(userMapper.selectById(30L)).thenReturn(approver);
 
         when(instanceMapper.insert(any(ApprovalInstance.class))).thenAnswer(inv -> {
             ApprovalInstance inst = inv.getArgument(0);
@@ -192,12 +191,12 @@ class ApprovalServiceImplTest {
     @Test
     @DisplayName("审批操作 — 同意后推进到下一级")
     void testApprove_AdvanceToNextLevel() {
-        // given: 第 1 级审批中
+        // given: 第 1 级审批中（单审批人，无并行）
         ApprovalInstance instance = createInstance(1L, 2, 1, Constants.APPROVAL_PENDING);
         ApprovalRecord record = createRecord(1L, 1L, 1, 20L, 0);
 
         when(instanceMapper.selectById(1L)).thenReturn(instance);
-        when(recordMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(record);
+        when(recordMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(record));
         when(recordMapper.updateById(any(ApprovalRecord.class))).thenReturn(1);
         when(instanceMapper.updateById(any(ApprovalInstance.class))).thenReturn(1);
 
@@ -220,7 +219,7 @@ class ApprovalServiceImplTest {
         ApprovalRecord record = createRecord(2L, 1L, 2, 30L, 0);
 
         when(instanceMapper.selectById(1L)).thenReturn(instance);
-        when(recordMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(record);
+        when(recordMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(record));
         when(recordMapper.updateById(any(ApprovalRecord.class))).thenReturn(1);
         when(instanceMapper.updateById(any(ApprovalInstance.class))).thenReturn(1);
 
@@ -252,7 +251,7 @@ class ApprovalServiceImplTest {
         ApprovalRecord record = createRecord(1L, 1L, 1, 20L, 0);
 
         when(instanceMapper.selectById(1L)).thenReturn(instance);
-        when(recordMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(record);
+        when(recordMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(record));
         when(recordMapper.updateById(any(ApprovalRecord.class))).thenReturn(1);
         when(instanceMapper.updateById(any(ApprovalInstance.class))).thenReturn(1);
 
@@ -278,7 +277,7 @@ class ApprovalServiceImplTest {
         ApprovalRecord record = createRecord(1L, 1L, 1, 20L, 0); // 审批人是 20L
 
         when(instanceMapper.selectById(1L)).thenReturn(instance);
-        when(recordMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(record);
+        when(recordMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(record));
 
         // 用户 999L 尝试审批 → 无权
         assertThrows(BusinessException.class,
@@ -384,12 +383,8 @@ class ApprovalServiceImplTest {
         instance.setBusinessId(200L);
         ApprovalRecord record = createRecord(1L, 2L, 1, 30L, 0);
 
-        // 单级审批模板
-        template.setApproversConfig("[{\"level\":1,\"type\":\"USER\",\"value\":\"30\"}]");
-        when(templateMapper.selectById(anyLong())).thenReturn(template);
-        when(userMapper.selectById(anyLong())).thenReturn(applicant, approver);
         when(instanceMapper.selectById(2L)).thenReturn(instance);
-        when(recordMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(record);
+        when(recordMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(record));
         when(recordMapper.updateById(any(ApprovalRecord.class))).thenReturn(1);
         when(instanceMapper.updateById(any(ApprovalInstance.class))).thenReturn(1);
 
@@ -400,12 +395,159 @@ class ApprovalServiceImplTest {
         when(expenseMapper.selectById(200L)).thenReturn(expense);
         when(expenseMapper.updateById(any(ExpenseRequest.class))).thenReturn(1);
 
-        // when
+        // when: 直接审批（已创建好的第1级单审批人实例）
         approvalService.approve(2L, Constants.APPROVAL_APPROVED, "批准报销", 30L);
 
         // then
         assertEquals(Constants.APPROVAL_APPROVED, expense.getStatus());
         verify(expenseMapper).updateById(expense);
+    }
+
+    // ==================== 并行审批测试（DEV-30） ====================
+
+    @Test
+    @DisplayName("并行审批 — 发起时同一级别多个审批人生成多条快照和记录")
+    void testStart_ParallelApprovers() {
+        // given: 模板配置第1级有2个审批人（部门负责人+管理员），第2级1个审批人
+        template.setApproversConfig(
+                "[{\"level\":1,\"type\":\"DEPT_LEADER\"},{\"level\":1,\"type\":\"ROLE\",\"value\":\"ROLE_ADMIN\"},{\"level\":2,\"type\":\"USER\",\"value\":\"30\"}]");
+        StartApprovalDTO dto = new StartApprovalDTO();
+        dto.setTemplateId(1L);
+        dto.setTitle("并行审批测试");
+        dto.setContent("{}");
+        dto.setBusinessType(Constants.BUSINESS_TYPE_LEAVE);
+        dto.setBusinessId(300L);
+
+        when(templateMapper.selectById(1L)).thenReturn(template);
+        when(userMapper.selectById(10L)).thenReturn(applicant);
+        when(deptMapper.selectById(2L)).thenReturn(dept);
+        // ROLE 类型审批人解析
+        when(roleMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(adminRole);
+        UserRole ur = new UserRole();
+        ur.setUserId(30L);
+        ur.setRoleId(1L);
+        when(userRoleMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(ur));
+        when(userMapper.selectById(30L)).thenReturn(approver);
+
+        when(instanceMapper.insert(any(ApprovalInstance.class))).thenAnswer(inv -> {
+            ApprovalInstance inst = inv.getArgument(0);
+            inst.setId(300L);
+            return 1;
+        });
+        when(recordMapper.insert(any(ApprovalRecord.class))).thenReturn(1);
+
+        // when
+        Long instanceId = approvalService.start(dto, 10L);
+
+        // then
+        assertNotNull(instanceId);
+        assertEquals(300L, instanceId);
+
+        // 验证实例：totalLevels=2（去重后），而非3（配置条目数）
+        ArgumentCaptor<ApprovalInstance> instanceCaptor = ArgumentCaptor.forClass(ApprovalInstance.class);
+        verify(instanceMapper).insert(instanceCaptor.capture());
+        ApprovalInstance saved = instanceCaptor.getValue();
+        assertEquals(2, saved.getTotalLevels());  // 去重：level 1 和 level 2
+        assertEquals(1, saved.getCurrentLevel());
+
+        // 验证预创建了3条审批记录（第1级2条 + 第2级1条）
+        verify(recordMapper, times(3)).insert(any(ApprovalRecord.class));
+    }
+
+    @Test
+    @DisplayName("并行审批 — 第一个审批人同意后推进下一级，其余自动作废")
+    void testApprove_ParallelFirstApproverAdvances() {
+        // given: 第1级有2个审批人（20L和30L），当前级别=1
+        ApprovalInstance instance = createInstance(1L, 2, 1, Constants.APPROVAL_PENDING);
+        ApprovalRecord record1 = createRecord(1L, 1L, 1, 20L, 0); // 部门负责人
+        ApprovalRecord record2 = createRecord(2L, 1L, 1, 30L, 0); // 管理员
+
+        when(instanceMapper.selectById(1L)).thenReturn(instance);
+        when(recordMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(record1, record2));
+        when(recordMapper.updateById(any(ApprovalRecord.class))).thenReturn(1);
+        when(instanceMapper.updateById(any(ApprovalInstance.class))).thenReturn(1);
+
+        // when: 部门负责人(20L)同意
+        approvalService.approve(1L, Constants.APPROVAL_APPROVED, "同意", 20L);
+
+        // then: 推进到第2级
+        assertEquals(2, instance.getCurrentLevel());
+        assertEquals(Constants.APPROVAL_PENDING, instance.getStatus());
+
+        // 验证：record1 被更新为同意，record2 被更新为作废
+        verify(recordMapper, times(2)).updateById(any(ApprovalRecord.class));
+    }
+
+    @Test
+    @DisplayName("并行审批 — 任一审批人驳回即终止，其余自动作废")
+    void testApprove_ParallelRejectionTerminates() {
+        // given: 第1级有2个审批人
+        ApprovalInstance instance = createInstance(1L, 2, 1, Constants.APPROVAL_PENDING);
+        ApprovalRecord record1 = createRecord(1L, 1L, 1, 20L, 0);
+        ApprovalRecord record2 = createRecord(2L, 1L, 1, 30L, 0);
+
+        when(instanceMapper.selectById(1L)).thenReturn(instance);
+        when(recordMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(record1, record2));
+        when(recordMapper.updateById(any(ApprovalRecord.class))).thenReturn(1);
+        when(instanceMapper.updateById(any(ApprovalInstance.class))).thenReturn(1);
+
+        // when: 管理员(30L)驳回
+        approvalService.approve(1L, Constants.APPROVAL_REJECTED, "不符合规定", 30L);
+
+        // then: 审批终止
+        assertEquals(Constants.APPROVAL_REJECTED, instance.getStatus());
+        assertNotNull(instance.getFinishTime());
+
+        // 验证：2条记录都被更新（1条驳回+1条件废）
+        verify(recordMapper, times(2)).updateById(any(ApprovalRecord.class));
+    }
+
+    @Test
+    @DisplayName("并行审批 — ROLE类型返回所有角色用户")
+    void testStart_ParallelRoleReturnsAllUsers() {
+        // given: 第1级配置ROLE类型，该角色有3个用户
+        template.setApproversConfig("[{\"level\":1,\"type\":\"ROLE\",\"value\":\"ROLE_ADMIN\"}]");
+        StartApprovalDTO dto = new StartApprovalDTO();
+        dto.setTemplateId(1L);
+        dto.setTitle("多用户角色审批");
+        dto.setContent("{}");
+
+        when(templateMapper.selectById(1L)).thenReturn(template);
+        when(userMapper.selectById(10L)).thenReturn(applicant);
+        when(roleMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(adminRole);
+
+        // 模拟ROLE_ADMIN角色有3个用户
+        UserRole ur1 = new UserRole(); ur1.setUserId(30L); ur1.setRoleId(1L);
+        UserRole ur2 = new UserRole(); ur2.setUserId(31L); ur2.setRoleId(1L);
+        UserRole ur3 = new UserRole(); ur3.setUserId(32L); ur3.setRoleId(1L);
+        when(userRoleMapper.selectList(any(LambdaQueryWrapper.class)))
+                .thenReturn(List.of(ur1, ur2, ur3));
+
+        // 需要 mock 3个用户的查询（如果 resolveApprovers 需要的话）
+        // ROLE 类型不需要查 userMapper，只有 USER 类型需要
+
+        when(instanceMapper.insert(any(ApprovalInstance.class))).thenAnswer(inv -> {
+            ApprovalInstance inst = inv.getArgument(0);
+            inst.setId(400L);
+            return 1;
+        });
+        when(recordMapper.insert(any(ApprovalRecord.class))).thenReturn(1);
+
+        // when
+        Long instanceId = approvalService.start(dto, 10L);
+
+        // then
+        assertNotNull(instanceId);
+        assertEquals(400L, instanceId);
+
+        // 验证实例：只有1个级别、3个审批人
+        ArgumentCaptor<ApprovalInstance> instanceCaptor = ArgumentCaptor.forClass(ApprovalInstance.class);
+        verify(instanceMapper).insert(instanceCaptor.capture());
+        ApprovalInstance saved = instanceCaptor.getValue();
+        assertEquals(1, saved.getTotalLevels()); // 只有1个级别
+
+        // 验证预创建了3条审批记录（每个角色用户1条）
+        verify(recordMapper, times(3)).insert(any(ApprovalRecord.class));
     }
 
     // ==================== 辅助方法 ====================

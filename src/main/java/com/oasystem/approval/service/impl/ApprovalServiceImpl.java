@@ -80,20 +80,28 @@ public class ApprovalServiceImpl implements ApprovalService {
             throw new BusinessException("申请人不存在");
         }
 
-        // 4. 逐级解析审批人
+        // 4. 逐级解析审批人（支持同一级别多个审批人）
         List<ApproverSnapshot> snapshots = new ArrayList<>();
         for (ApproverConfig config : approverConfigs) {
-            Long approverId = resolveApprover(config, applicant);
-            snapshots.add(new ApproverSnapshot(config.getLevel(), approverId));
+            List<Long> approverIds = resolveApprovers(config, applicant);
+            for (Long approverId : approverIds) {
+                snapshots.add(new ApproverSnapshot(config.getLevel(), approverId));
+            }
         }
 
-        // 5. 创建审批实例
+        // 5. 计算去重后的审批级别数
+        int distinctLevels = (int) snapshots.stream()
+                .map(ApproverSnapshot::getLevel)
+                .distinct()
+                .count();
+
+        // 6. 创建审批实例
         ApprovalInstance instance = new ApprovalInstance();
         instance.setTemplateId(dto.getTemplateId());
         instance.setApplicantId(applicantId);
         instance.setTitle(dto.getTitle());
         instance.setContent(dto.getContent());
-        instance.setTotalLevels(snapshots.size());
+        instance.setTotalLevels(distinctLevels);
         instance.setCurrentLevel(1);
         instance.setStatus(Constants.APPROVAL_PENDING);
         instance.setBusinessType(dto.getBusinessType());
@@ -105,7 +113,7 @@ public class ApprovalServiceImpl implements ApprovalService {
         }
         instanceMapper.insert(instance);
 
-        // 6. 预创建每级审批记录
+        // 7. 预创建每级审批记录（同一级别可能有多条记录）
         for (ApproverSnapshot snap : snapshots) {
             ApprovalRecord record = new ApprovalRecord();
             record.setInstanceId(instance.getId());
@@ -115,8 +123,8 @@ public class ApprovalServiceImpl implements ApprovalService {
             recordMapper.insert(record);
         }
 
-        log.info("审批发起成功, instanceId={}, applicantId={}, totalLevels={}",
-                instance.getId(), applicantId, snapshots.size());
+        log.info("审批发起成功, instanceId={}, applicantId={}, totalSnapshots={}, distinctLevels={}",
+                instance.getId(), applicantId, snapshots.size(), distinctLevels);
         return instance.getId();
     }
 
@@ -166,11 +174,11 @@ public class ApprovalServiceImpl implements ApprovalService {
 
     @Override
     public List<ApprovalInstance> getDone(Long userId) {
-        // 查询当前用户已经审批过的记录（同意或驳回）
+        // 查询当前用户已经审批过的记录（同意或驳回，排除自动作废）
         List<ApprovalRecord> doneRecords = recordMapper.selectList(
                 new LambdaQueryWrapper<ApprovalRecord>()
                         .eq(ApprovalRecord::getApproverId, userId)
-                        .ne(ApprovalRecord::getResult, 0)
+                        .notIn(ApprovalRecord::getResult, 0, Constants.APPROVAL_AUTO_VOIDED)
         );
         if (doneRecords.isEmpty()) {
             return Collections.emptyList();
@@ -223,31 +231,43 @@ public class ApprovalServiceImpl implements ApprovalService {
             }
         }
 
-        // 查找当前级别的审批记录
-        ApprovalRecord record = recordMapper.selectOne(
+        // 查找当前级别的所有待审批记录（支持并行审批：同一级别可能有多条记录）
+        List<ApprovalRecord> currentLevelRecords = recordMapper.selectList(
                 new LambdaQueryWrapper<ApprovalRecord>()
                         .eq(ApprovalRecord::getInstanceId, instanceId)
                         .eq(ApprovalRecord::getLevel, instance.getCurrentLevel())
+                        .eq(ApprovalRecord::getResult, 0)  // 只查待审批的
         );
-        if (record == null) {
-            throw new BusinessException("当前审批级别的记录不存在");
+        if (currentLevelRecords.isEmpty()) {
+            throw new BusinessException("当前审批级别没有待审批记录");
         }
 
-        // 校验记录状态
-        if (record.getResult() != 0) {
-            throw new BusinessException("该级别已被审批");
-        }
+        // 在当前级别的待审批记录中查找属于当前用户的记录
+        ApprovalRecord record = currentLevelRecords.stream()
+                .filter(r -> r.getApproverId().equals(currentUserId))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException("您不是当前级别的审批人，无权审批"));
 
-        // 校验当前用户是否为指定审批人
-        if (!record.getApproverId().equals(currentUserId)) {
-            throw new BusinessException("您不是当前级别的审批人，无权审批");
-        }
-
-        // 更新审批记录
+        // 更新当前审批人的记录
         record.setResult(result);
         record.setComment(comment);
         record.setApprovalTime(LocalDateTime.now());
         recordMapper.updateById(record);
+
+        // 作废同级别其他审批人的待审批记录（并行审批：一人处理后其余自动作废）
+        List<ApprovalRecord> otherPending = currentLevelRecords.stream()
+                .filter(r -> !r.getApproverId().equals(currentUserId))
+                .collect(Collectors.toList());
+        for (ApprovalRecord other : otherPending) {
+            other.setResult(Constants.APPROVAL_AUTO_VOIDED);
+            other.setComment("其他审批人已处理，本记录自动作废");
+            other.setApprovalTime(LocalDateTime.now());
+            recordMapper.updateById(other);
+        }
+        if (!otherPending.isEmpty()) {
+            log.info("并行审批作废其他记录, instanceId={}, level={}, voidedCount={}",
+                    instanceId, instance.getCurrentLevel(), otherPending.size());
+        }
 
         // 状态流转
         if (result == Constants.APPROVAL_REJECTED) {
@@ -358,9 +378,12 @@ public class ApprovalServiceImpl implements ApprovalService {
     }
 
     /**
-     * 根据配置解析具体审批人ID
+     * 根据配置解析审批人ID列表
+     * <p>
+     * 支持并行审批：ROLE 类型会返回所有拥有该角色的用户ID，
+     * DEPT_LEADER 和 USER 类型返回单个元素的列表。
      */
-    private Long resolveApprover(ApproverConfig config, User applicant) {
+    private List<Long> resolveApprovers(ApproverConfig config, User applicant) {
         int level = config.getLevel();
         String type = config.getType();
 
@@ -376,7 +399,7 @@ public class ApprovalServiceImpl implements ApprovalService {
                 if (dept.getLeaderId() == null) {
                     throw new BusinessException("您所属的部门【" + dept.getDeptName() + "】未设置负责人，无法提交审批");
                 }
-                return dept.getLeaderId();
+                return Collections.singletonList(dept.getLeaderId());
             }
             case "ROLE": {
                 if (config.getValue() == null || config.getValue().isBlank()) {
@@ -390,7 +413,7 @@ public class ApprovalServiceImpl implements ApprovalService {
                 if (role == null) {
                     throw new BusinessException("角色编码【" + config.getValue() + "】不存在");
                 }
-                // 查找拥有该角色的用户
+                // 查找拥有该角色的所有用户（并行审批：不再只取第一个）
                 List<UserRole> userRoles = userRoleMapper.selectList(
                         new LambdaQueryWrapper<UserRole>()
                                 .eq(UserRole::getRoleId, role.getId())
@@ -398,8 +421,11 @@ public class ApprovalServiceImpl implements ApprovalService {
                 if (userRoles.isEmpty()) {
                     throw new BusinessException("没有用户拥有角色【" + role.getRoleName() + "】，无法提交审批");
                 }
-                // 取第一个拥有该角色的用户作为审批人
-                return userRoles.get(0).getUserId();
+                // 返回所有拥有该角色的用户ID
+                return userRoles.stream()
+                        .map(UserRole::getUserId)
+                        .distinct()
+                        .collect(Collectors.toList());
             }
             case "USER": {
                 if (config.getValue() == null || config.getValue().isBlank()) {
@@ -415,7 +441,7 @@ public class ApprovalServiceImpl implements ApprovalService {
                 if (approver == null) {
                     throw new BusinessException("第" + level + "级指定的审批人（ID=" + approverId + "）不存在");
                 }
-                return approverId;
+                return Collections.singletonList(approverId);
             }
             default:
                 throw new BusinessException("第" + level + "级审批人类型不支持：" + type);

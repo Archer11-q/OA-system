@@ -65,3 +65,8 @@ INSERT INTO appr_template (id, template_name, template_code, description, approv
 INSERT INTO appr_template (id, template_name, template_code, description, approval_levels, status, approvers_config) VALUES
 (2, '报销审批', 'EXPENSE_APPROVAL', '员工报销审批流程：部门负责人审批 → 管理员终审', 2, 1,
  '[{"level":1,"type":"DEPT_LEADER"},{"level":2,"type":"ROLE","value":"ROLE_ADMIN"}]');
+
+-- 并行审批示例模板：第1级支持并行审批（部门负责人 + 管理员，任一同意即可推进到第2级）
+INSERT INTO appr_template (id, template_name, template_code, description, approval_levels, status, approvers_config) VALUES
+(3, '紧急请假（并行审批）', 'LEAVE_URGENT', '第1级并行审批：部门负责人或管理员任一通过即可 → 第2级管理员终审', 2, 1,
+ '[{"level":1,"type":"DEPT_LEADER"},{"level":1,"type":"ROLE","value":"ROLE_ADMIN"},{"level":2,"type":"ROLE","value":"ROLE_ADMIN"}]');

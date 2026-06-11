@@ -161,7 +161,7 @@
     </el-dialog>
 
     <!-- 审批模板对话框 -->
-    <el-dialog v-model="templateDialogVisible" :title="templateDialogTitle" width="500px" @close="handleTemplateDialogClose">
+    <el-dialog v-model="templateDialogVisible" :title="templateDialogTitle" width="700px" @close="handleTemplateDialogClose">
       <el-form ref="templateFormRef" :model="templateForm" :rules="templateRules" label-width="90px">
         <el-form-item label="模板名称" prop="templateName">
           <el-input v-model="templateForm.templateName" placeholder="请输入模板名称" />
@@ -169,14 +169,38 @@
         <el-form-item label="模板编码" prop="templateCode">
           <el-input v-model="templateForm.templateCode" placeholder="请输入模板编码" :disabled="templateIsEdit" />
         </el-form-item>
-        <el-form-item label="审批级别数">
-          <el-input-number v-model="templateForm.approvalLevels" :min="1" :max="5" />
-        </el-form-item>
         <el-form-item label="状态">
           <el-switch v-model="templateForm.status" :active-value="1" :inactive-value="0" />
         </el-form-item>
         <el-form-item label="描述">
           <el-input v-model="templateForm.description" type="textarea" :rows="2" placeholder="请输入模板描述" />
+        </el-form-item>
+        <!-- 审批人配置（支持并行审批：同一级别可配置多个审批人） -->
+        <el-form-item label="审批人配置" prop="approversConfigList">
+          <div v-for="(item, index) in templateForm.approversConfigList" :key="index"
+               style="margin-bottom:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+            <span style="white-space:nowrap;font-size:13px">第</span>
+            <el-input-number v-model="item.level" :min="1" :max="5" size="small" style="width:70px" />
+            <span style="white-space:nowrap;font-size:13px">级</span>
+            <el-select v-model="item.type" size="small" style="width:140px" @change="onApproverTypeChange(item)">
+              <el-option label="部门负责人" value="DEPT_LEADER" />
+              <el-option label="角色" value="ROLE" />
+              <el-option label="指定用户" value="USER" />
+            </el-select>
+            <el-input v-if="item.type === 'ROLE'" v-model="item.value" size="small"
+                      placeholder="角色编码，如 ROLE_ADMIN" style="width:180px" />
+            <el-input v-if="item.type === 'USER'" v-model="item.value" size="small"
+                      placeholder="用户ID" style="width:120px" />
+            <el-button type="danger" size="small" :icon="'Delete'" circle
+                       @click="removeApproverConfig(index)"
+                       :disabled="templateForm.approversConfigList.length <= 1" />
+          </div>
+          <el-button type="primary" size="small" plain icon="Plus" @click="addApproverConfig">
+            添加审批人配置
+          </el-button>
+          <div style="margin-top:4px;font-size:12px;color:#909399">
+            提示：同一级别配置多个审批人即启用并行审批（任一同意即可推进，任一驳回即终止）
+          </div>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -238,12 +262,12 @@ function instanceStatusLabel(s) {
 }
 
 function recordResultType(r) {
-  const map = { 0: 'info', 1: 'success', 2: 'danger' }
+  const map = { 0: 'info', 1: 'success', 2: 'danger', 4: 'info' }
   return map[r] || 'info'
 }
 
 function recordResultLabel(r) {
-  const map = { 0: '待审批', 1: '同意', 2: '驳回' }
+  const map = { 0: '待审批', 1: '同意', 2: '驳回', 4: '自动作废' }
   return map[r] || '未知'
 }
 
@@ -362,14 +386,57 @@ const defaultTemplateForm = () => ({
   templateCode: '',
   approvalLevels: 2,
   status: 1,
-  description: ''
+  description: '',
+  approversConfigList: [{ level: 1, type: 'DEPT_LEADER', value: '' }]
 })
 
 const templateForm = reactive(defaultTemplateForm())
 
 const templateRules = {
   templateName: [{ required: true, message: '请输入模板名称', trigger: 'blur' }],
-  templateCode: [{ required: true, message: '请输入模板编码', trigger: 'blur' }]
+  templateCode: [{ required: true, message: '请输入模板编码', trigger: 'blur' }],
+  approversConfigList: [{
+    validator: (_rule, _value, callback) => {
+      const list = templateForm.approversConfigList
+      if (!list || list.length === 0) {
+        callback(new Error('请至少配置一个审批人'))
+        return
+      }
+      for (let i = 0; i < list.length; i++) {
+        const item = list[i]
+        if (!item.level || item.level < 1) {
+          callback(new Error(`第${i + 1}个审批人：级别必须大于等于1`))
+          return
+        }
+        if (item.type === 'ROLE' && (!item.value || !item.value.trim())) {
+          callback(new Error(`第${i + 1}个审批人：角色类型必须填写角色编码`))
+          return
+        }
+        if (item.type === 'USER' && (!item.value || isNaN(Number(item.value)))) {
+          callback(new Error(`第${i + 1}个审批人：用户类型必须填写有效的用户ID`))
+          return
+        }
+      }
+      callback()
+    },
+    trigger: 'change'
+  }]
+}
+
+// 审批人配置操作
+function addApproverConfig() {
+  templateForm.approversConfigList.push({ level: 1, type: 'DEPT_LEADER', value: '' })
+}
+
+function removeApproverConfig(index) {
+  templateForm.approversConfigList.splice(index, 1)
+}
+
+function onApproverTypeChange(item) {
+  // 切换为部门负责人时清空value
+  if (item.type === 'DEPT_LEADER') {
+    item.value = ''
+  }
 }
 
 function handleTemplateAdd() {
@@ -382,13 +449,29 @@ function handleTemplateAdd() {
 function handleTemplateEdit(row) {
   templateDialogTitle.value = '编辑模板'
   templateIsEdit.value = true
+  // 从 approversConfig JSON 反序列化审批人配置列表
+  let configList = [{ level: 1, type: 'DEPT_LEADER', value: '' }]
+  try {
+    if (row.approversConfig) {
+      const parsed = JSON.parse(row.approversConfig)
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        configList = parsed.map(item => ({
+          level: item.level || 1,
+          type: item.type || 'DEPT_LEADER',
+          value: item.value || ''
+        }))
+      }
+    }
+  } catch { /* 解析失败使用默认配置 */ }
+
   Object.assign(templateForm, {
     id: row.id,
     templateName: row.templateName || '',
     templateCode: row.templateCode || '',
     approvalLevels: row.approvalLevels ?? 2,
     status: row.status ?? 1,
-    description: row.description || ''
+    description: row.description || '',
+    approversConfigList: configList
   })
   templateDialogVisible.value = true
 }
@@ -402,11 +485,18 @@ async function handleTemplateSubmit() {
   if (!valid) return
   templateSubmitLoading.value = true
   try {
+    // 将审批人配置列表序列化为 JSON 字符串
+    const payload = {
+      ...templateForm,
+      approversConfig: JSON.stringify(templateForm.approversConfigList)
+    }
+    delete payload.approversConfigList
+
     if (templateIsEdit.value) {
-      await updateTemplate(templateForm)
+      await updateTemplate(payload)
       ElMessage.success('更新模板成功')
     } else {
-      await addTemplate(templateForm)
+      await addTemplate(payload)
       ElMessage.success('新增模板成功')
     }
     templateDialogVisible.value = false

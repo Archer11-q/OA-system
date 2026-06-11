@@ -40,6 +40,7 @@
 >- HOTFIX (2026-06-11)：修复认证流程四大连锁问题 — 1) 创建缺失的 MyBatis XML 映射文件（RoleMapper.xml / MenuMapper.xml / AttendanceMapper.xml），`selectRolesByUserId` 和 `selectMenusByUserId` 方法只有接口声明无 SQL 实现，导致 `getCurrentUserInfo()` 抛出 BindingException → 500；2) 修正 SecurityConfig 开启 JWT 认证拦截（之前所有路径 permitAll），配置 401/403 统一 JSON 响应；3) 前端路由守卫改为解析 JWT exp 判定过期（之前仅检查 token 字符串存在导致跳过登录页）；4) 登录 store 中 getUserInfo() 失败时回滚清除 token 防止"半登录"状态。
 >- HOTFIX (2026-06-11)：修复 Dashboard/Approval/Expense 模块 500 错误 — 根因是 H2 数据库文件（data/oa-system.mv.db）使用旧版 schema-h2.sql 创建，`CREATE TABLE IF NOT EXISTS` 不会更新已存在的表结构，导致 `appr_instance` 等表的列名与实体映射不一致（Column "APPROVERS_SNAPSHOT" not found）。解决：删除 H2 数据文件重新初始化。⚠️ 注意：修改 schema-h2.sql 后需手动删除 H2 DB 文件。
 >- HOTFIX (2026-06-11)：增强错误处理 — `UserServiceImpl.getUserRoles()` / `getCurrentUserInfo()` 增加 try-catch 降级保护；前端 Axios 错误处理增加从响应体提取后端错误消息；前端 Dashboard 兼容嵌套/扁平两种响应结构。
+>- DEV-30 (2026-06-11)：实现并行审批策略 — 同一级别支持多个审批人，任一人同意推进下一级，任一人驳回则整体驳回；`resolveApprovers()` 方法 ROLE 类型返回所有角色用户（不再只取第一人）；审批操作后自动作废同级别其他待审批记录（`APPROVAL_AUTO_VOIDED = 4`）；前端模板表单新增审批人配置编辑器（动态增删、类型联动）；新增 4 个并行审批测试用例，累计 33 测试全部通过；seed 数据新增"紧急请假（并行审批）"示例模板。
 ---
 
 ## 目录
@@ -359,9 +360,7 @@ oa-system/
 - 审批记录查询：✅ 按实例ID查询各级审批意见
 - 业务回调：✅ 审批完成后自动同步关联业务记录状态（请假 ✅，报销 ✅）
 - 审批撤回：✅ 申请人可撤回审批中的实例，同步取消关联业务记录
-
-待完善：
-- 并行审批策略（同一级别多人审批，任一人同意即可）
+- **并行审批 (DEV-30)**：✅ 模板中允许同一 `level` 出现多个审批人配置项。每个配置独立解析，生成多条快照共享同一级别。同一级别的任一审批人同意即推进到下一级，任一审批人驳回则整个实例驳回。处理后同级别其他待审批记录自动标记为"作废"（`APPROVAL_AUTO_VOIDED=4`）。ROLE 类型返回所有拥有该角色的用户（不再只取第一个）。前端模板表单支持动态添加/删除审批人配置项。
 
 ---
 

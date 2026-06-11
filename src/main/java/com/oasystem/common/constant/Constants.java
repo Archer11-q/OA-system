@@ -27,6 +27,8 @@ public final class Constants {
     public static final int APPROVAL_REJECTED = 2;
     /** 已撤回 */
     public static final int APPROVAL_CANCELLED = 3;
+    /** 自动作废（并行审批中，其他审批人抢先处理导致本记录作废） */
+    public static final int APPROVAL_AUTO_VOIDED = 4;
 
     // ========== 考勤状态 ==========
     /** 正常 */

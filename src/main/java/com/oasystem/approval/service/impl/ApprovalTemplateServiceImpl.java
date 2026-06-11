@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * 审批模板管理 Service 实现
@@ -146,7 +147,11 @@ public class ApprovalTemplateServiceImpl extends ServiceImpl<ApprovalTemplateMap
                     }
                 }
             }
-            return root.size();
+            // 返回去重后的审批级别数（支持同一级别配置多个审批人）
+            return (int) IntStream.range(0, root.size())
+                    .mapToObj(i -> root.get(i).get("level").asInt())
+                    .distinct()
+                    .count();
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
