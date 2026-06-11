@@ -42,6 +42,7 @@
 >- HOTFIX (2026-06-11)：增强错误处理 — `UserServiceImpl.getUserRoles()` / `getCurrentUserInfo()` 增加 try-catch 降级保护；前端 Axios 错误处理增加从响应体提取后端错误消息；前端 Dashboard 兼容嵌套/扁平两种响应结构。
 >- DEV-30 (2026-06-11)：实现并行审批策略 — 同一级别支持多个审批人，任一人同意推进下一级，任一人驳回则整体驳回；`resolveApprovers()` 方法 ROLE 类型返回所有角色用户（不再只取第一人）；审批操作后自动作废同级别其他待审批记录（`APPROVAL_AUTO_VOIDED = 4`）；前端模板表单新增审批人配置编辑器（动态增删、类型联动）；新增 4 个并行审批测试用例，累计 33 测试全部通过；seed 数据新增"紧急请假（并行审批）"示例模板。
 >- DEV-31 (2026-06-11)：实现日程日历视图 — 前端集成 FullCalendar（@fullcalendar/vue3），支持月/周/日三视图切换；日程数据自动映射为日历事件（按类型着色）；点击日期空白区域快速创建日程（预填日期），点击事件打开编辑对话框；日历翻页自动加载对应日期范围数据；保留原有列表视图，双视图通过按钮一键切换。
+- DEV-32 (2026-06-11)：前端性能优化 — 布局层添加 `<keep-alive>` 组件缓存，路由切换时保留业务页面状态（表单/滚动/数据）；Vite 构建配置 `manualChunks` 手动分包，将 element-plus / echarts / fullcalendar / element-icons 拆分为独立 chunk，利用浏览器并行加载和缓存策略减少二次加载体积。
 ---
 
 ## 目录
@@ -731,7 +732,7 @@ GET    /oa/dashboard/expense-distribution  ← 报销类型分布（饼图）
 
 - [x] 切换到 MySQL（DEV-23：application-prod.yml + HikariCP 连接池 + 日志）
 - [x] 单元测试（DEV-24：JUnit 5 + Mockito 覆盖 Approval/Attendance/User 三大核心 Service）
-- [ ] 性能优化（索引/缓存）
+- [x] 性能优化（路由懒加载 + keep-alive 缓存 + 构建分包 — DEV-32）
 - [x] Docker 部署脚本（DEV-27：Dockerfile 多阶段构建 + docker-compose.yml）
 - [ ] 接口文档完善
 

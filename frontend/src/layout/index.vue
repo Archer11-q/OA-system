@@ -83,7 +83,11 @@
 
       <!-- 内容区 -->
       <el-main class="layout-main">
-        <router-view />
+        <router-view v-slot="{ Component }">
+          <keep-alive :include="cachedViews">
+            <component :is="Component" />
+          </keep-alive>
+        </router-view>
       </el-main>
     </el-container>
   </el-container>
@@ -101,6 +105,12 @@ const userStore = useUserStore()
 const isCollapse = ref(false)
 const activeMenu = computed(() => route.path)
 const currentRoute = computed(() => route.meta?.title || '')
+
+// keep-alive 缓存的视图组件名列表
+const cachedViews = computed(() => [
+  'Dashboard', 'UserList', 'RoleList', 'MenuList', 'DeptList',
+  'Attendance', 'Approval', 'Notice', 'Schedule', 'Expense'
+])
 
 function handleCommand(command) {
   if (command === 'logout') {
